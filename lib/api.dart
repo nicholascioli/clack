@@ -264,10 +264,10 @@ class API {
   ///
   /// Fetches a batch of commments from [url]. See [_getVideos()] for more
   /// info.
-  static Future<ApiResult<dynamic>> _getComments(
-      String url, int count, int cursor) async {
-    throw Exception("Not Implemented");
-  }
+  // static Future<ApiResult<dynamic>> _getComments(
+  //     String url, int count, int cursor) async {
+  //   throw Exception("Not Implemented");
+  // }
 
   static Future<String> sign(String url) async {
     // Now execute
