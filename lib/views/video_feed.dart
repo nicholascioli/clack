@@ -1,0 +1,202 @@
+import 'package:clack/api.dart';
+import 'package:clack/utility.dart';
+import 'package:clack/api/video_result.dart';
+import 'package:clack/views/intro_screen.dart';
+import 'package:clack/views/search.dart';
+import 'package:clack/views/user_info.dart';
+import 'package:clack/views/video_page.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_spinkit/flutter_spinkit.dart';
+
+/// Which page to show in the left page of the [VideoFeed]
+enum VideoFeedActivePage { VIDEO, SEARCH, NOTIFICATION, PROFILE }
+
+/// Optional Arguments for constructing a [VideoFeed]
+///
+/// When used, signals that this [VideoFeed] is nested.
+class VideoFeedArgs {
+  /// The stream from which to fetch videos
+  final ApiStream<VideoResult> stream;
+
+  /// Which index to fetch from first
+  final int startIndex;
+
+  /// How many videos this feed should show
+  ///
+  /// When nested, this is typically how many videos an [Author] has or
+  /// has liked.
+  final int length;
+
+  const VideoFeedArgs(this.stream, this.startIndex, this.length);
+}
+
+/// A view showing a feed of videos and other options
+///
+/// This view is composed of a:
+/// * [ViewPager] of [VideoPages]
+/// * [Search]
+/// * [UserInfo] of an [Author]
+///
+/// The [UserInfo] page is available to the right if this [VideoFeed] is not
+/// nested and if the active page is the [ViewPager]. The user can switch
+/// between the [ViewPager] and the other views by using the bottom bar of
+/// buttons.
+class VideoFeed extends StatefulWidget {
+  static const routeName = "/video_feed";
+
+  @override
+  _VideoFeedState createState() => _VideoFeedState();
+}
+
+class _VideoFeedState extends State<VideoFeed> {
+  // TODO: Make this depend on whether the user is logged in or not.
+  /// The [ApiStream]<[VideoResult]> of trending videos
+  ///
+  /// This will always be the trending videos, but should be updated to
+  /// eventually show the 'ForYou' page.
+  ApiStream<VideoResult> _videos = API.getTrendingStream(30);
+
+  /// The currently active [VideoPage]
+  int _currentIndex = 0;
+
+  /// The length of the [VideoFeed]. If set to null, indicates an endless list
+  int _length;
+
+  /// Is this [VideoFeed] nested?
+  ///
+  /// This is passed to the child [VideoPage] for showing a back button if
+  /// nested and for disabling both the Bottom button bar and adjacent [UserInfo]
+  /// when nested.
+  bool _isNested = false;
+
+  /// Has this [VideoFeed] initialized?
+  ///
+  /// This is needed because arguments to named routes cannot be extracted
+  /// in the [initState()] method.
+  bool _hasInit = false;
+
+  /// The page to show on the left tab
+  VideoFeedActivePage _activePage = VideoFeedActivePage.VIDEO;
+
+  @override
+  Widget build(BuildContext context) {
+    // Extract video and video stream, if present
+    final VideoFeedArgs args = ModalRoute.of(context).settings.arguments;
+    if (args != null && !this._hasInit) {
+      this._videos = args.stream;
+      this._currentIndex = args.startIndex;
+      this._length = args.length;
+      this._isNested = true;
+    }
+    this._hasInit = true;
+
+    // Update view whenever new data from network
+    this._videos.setOnChanged(() => setState(() {}));
+
+    // Return the view
+    return this._isNested ? _buildVideoPager() : _buildVideos();
+  }
+
+  /// Generates the TabView containing the variable left page and [UserInfo] right page
+  Widget _buildVideos() => DefaultTabController(
+        length: 2,
+        child: TabBarView(children: [
+          _buildVideoWithBar(),
+          UserInfo(() => _videos[_currentIndex].author)
+        ]),
+      );
+
+  /// Generates the multi-page left tab
+  Widget _buildVideoWithBar() {
+    final views = Map.from({
+      VideoFeedActivePage.VIDEO: () => _buildVideoPager(),
+      VideoFeedActivePage.SEARCH: () =>
+          SearchView((v) => setState(() => _activePage = v)),
+      VideoFeedActivePage.NOTIFICATION: () => IntroScreen(),
+      VideoFeedActivePage.PROFILE: () => IntroScreen()
+    });
+    return Scaffold(
+        // We need the appBar to only show here when we have the videoPager, so that
+        //   the back button appears when we are nested
+        appBar: _isNested
+            ? AppBar(backgroundColor: Colors.transparent, elevation: 0)
+            : null,
+        extendBodyBehindAppBar: true,
+        backgroundColor: Colors.black,
+        bottomNavigationBar: _buildBottomBar(),
+        body: views[_activePage]());
+  }
+
+  /// Builds just the [VideoPage] [ViewPager]
+  Widget _buildVideoPager() => Stack(children: [
+        PageView.builder(
+            controller:
+                PageController(keepPage: false, initialPage: _currentIndex),
+            scrollDirection: Axis.vertical,
+            itemCount: _length,
+            itemBuilder: (context, i) {
+              // Show loading symbol if we are awaiting API response
+              final VideoResult v = _videos[i];
+              if (v == null) {
+                return Center(
+                    child: SpinKitWave(color: Colors.white, size: 50.0));
+              } else {
+                return VideoPage(
+                    isNested: _isNested,
+                    videoInfo: _videos[i],
+                    index: i,
+                    currentIndex: _currentIndex);
+              }
+            },
+            onPageChanged: (page) {
+              print("MOVING: $page");
+
+              // FIXME: This is slightly nasty. Is there no other way?
+              setState(() => _currentIndex = page);
+            }),
+      ]);
+
+  /// Builds the bottom bar used for navigating the left tab
+  Widget _buildBottomBar() {
+    /// Builds a specific [icon] tab which sets the [active] page when clicked
+    final buildTab = (IconData icon, VideoFeedActivePage active) =>
+        IntrinsicWidth(
+            child: Column(mainAxisSize: MainAxisSize.min, children: [
+          IconButton(
+              iconSize: 30,
+              padding: EdgeInsets.all(2),
+              icon: Icon(icon, color: Colors.white),
+              onPressed: () {
+                // Allow for switching between the states
+                print("PUSHED! Setting from $_activePage to $active");
+                if (_activePage != active) setState(() => _activePage = active);
+              }),
+          _activePage == active
+              ? Divider(
+                  color: Colors.white,
+                  height: 2,
+                  thickness: 2,
+                )
+              : Container(height: 2)
+        ]));
+
+    return BottomAppBar(
+        color: Colors.transparent,
+        elevation: 0,
+        child: ButtonBar(
+          alignment: MainAxisAlignment.spaceEvenly,
+          children: [
+            buildTab(Icons.home, VideoFeedActivePage.VIDEO),
+            buildTab(Icons.search, VideoFeedActivePage.SEARCH),
+            IconButton(
+                iconSize: 45,
+                padding: EdgeInsets.all(2),
+                icon: Icon(Icons.block, color: Colors.red),
+                onPressed: () => showNotImplemented(context)),
+            buildTab(
+                Icons.notifications_none, VideoFeedActivePage.NOTIFICATION),
+            buildTab(Icons.person_outline, VideoFeedActivePage.PROFILE)
+          ],
+        ));
+  }
+}
