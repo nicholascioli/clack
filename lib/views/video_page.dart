@@ -5,6 +5,7 @@ import 'package:icon_shadow/icon_shadow.dart';
 import 'package:marquee/marquee.dart';
 import 'package:share/share.dart';
 import 'package:video_player/video_player.dart';
+import 'package:wakelock/wakelock.dart';
 
 /// VideoPage
 ///
@@ -92,6 +93,13 @@ class _VideoPageState extends State<VideoPage>
     // Set up the [VideoController] to play (and loop) this video
     _setupVideo(widget.videoInfo);
 
+    // Make sure that we WakeLock if there is a video playing. We disable on dispose
+    _controller.addListener(() => Wakelock.isEnabled.then((haveLock) {
+          if (!haveLock && _controller.value.isPlaying)
+            Wakelock.enable();
+          else if (haveLock && !_controller.value.isPlaying) Wakelock.disable();
+        }));
+
     // Set up the animation controller to spin the music button indefinitely
     _animation =
         AnimationController(vsync: this, duration: Duration(seconds: 5));
@@ -105,6 +113,9 @@ class _VideoPageState extends State<VideoPage>
   void dispose() {
     // Pause any playing videos
     _controller.pause();
+
+    // Make sure to release the WakeLock, if we have it
+    Wakelock.disable();
 
     // Dispose of the controller, if it exist
     _controller.dispose();
