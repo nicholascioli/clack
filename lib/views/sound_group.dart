@@ -1,3 +1,4 @@
+import 'package:audioplayer/audioplayer.dart';
 import 'package:clack/api.dart';
 import 'package:clack/api/music_result.dart';
 import 'package:clack/api/video_result.dart';
@@ -23,8 +24,27 @@ class _SoundGroupState extends State<SoundGroup> {
       TextStyle(fontSize: 20, fontWeight: FontWeight.bold);
   final TextStyle textStyle = TextStyle(color: Colors.grey);
 
+  final AudioPlayer _player = AudioPlayer();
   ApiStream<VideoResult> _videos;
   bool _hasInit = false;
+
+  @override
+  void dispose() {
+    // Stop the player
+    _player.stop();
+
+    // Continue death
+    super.dispose();
+  }
+
+  @override
+  void initState() {
+    // Update the UI when player changes state
+    _player.onPlayerStateChanged.listen((event) => setState(() {}));
+
+    // Continue init
+    super.initState();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -72,25 +92,34 @@ class _SoundGroupState extends State<SoundGroup> {
             children: [
               Expanded(
                   flex: 1,
-                  child: AspectRatio(
-                      aspectRatio: 1,
-                      child: ClipRRect(
-                          borderRadius: BorderRadius.circular(5),
-                          child: DecoratedBox(
-                            decoration: BoxDecoration(
-                                image: DecorationImage(
-                                    image: NetworkImage(_videos[0]
-                                        .music
-                                        .coverLarge
-                                        .toString()))),
-                            child: Center(
-                              child: IconShadowWidget(
-                                Icon(Icons.play_arrow,
-                                    color: Colors.white, size: 50),
-                                shadowColor: Colors.black,
-                              ),
-                            ),
-                          )))),
+                  child: GestureDetector(
+                      onTap: () => _player.state == AudioPlayerState.PLAYING
+                          ? _player.pause()
+                          : _player.play(_videos[0].music.playUrl.toString()),
+                      child: AspectRatio(
+                          aspectRatio: 1,
+                          child: ClipRRect(
+                              borderRadius: BorderRadius.circular(5),
+                              child: DecoratedBox(
+                                decoration: BoxDecoration(
+                                    image: DecorationImage(
+                                        image: NetworkImage(_videos[0]
+                                            .music
+                                            .coverLarge
+                                            .toString()))),
+                                child: Center(
+                                  child: IconShadowWidget(
+                                    Icon(
+                                        _player.state !=
+                                                AudioPlayerState.PLAYING
+                                            ? Icons.play_arrow
+                                            : Icons.pause,
+                                        color: Colors.white,
+                                        size: 50),
+                                    shadowColor: Colors.black,
+                                  ),
+                                ),
+                              ))))),
               Expanded(
                   flex: 2,
                   child: Padding(
@@ -131,8 +160,14 @@ class _SoundGroupState extends State<SoundGroup> {
       delegate: SliverChildBuilderDelegate((context, index) => AspectRatio(
           aspectRatio: 1,
           child: GestureDetector(
-              onTap: () => Navigator.pushNamed(context, VideoFeed.routeName,
-                  arguments: VideoFeedArgs(_videos, index, null)),
+              onTap: () {
+                // Stop the music, if playing
+                _player.stop();
+
+                // Start the VideoFeed
+                Navigator.pushNamed(context, VideoFeed.routeName,
+                    arguments: VideoFeedArgs(_videos, index, null));
+              },
               child: Container(
                   color: Colors.black,
                   child: Hero(
