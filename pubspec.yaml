@@ -44,8 +44,17 @@ dependencies:
 
 dev_dependencies:
   dataclass_generator: ^0.3.0
+  flutter_launcher_icons: ^0.7.5
   flutter_test:
     sdk: flutter
+
+# Specify icon settings here
+flutter_icons:
+  android: true
+  ios: true
+  image_path: "icons/launcher_icon.png"
+  adaptive_icon_background: "#484848"
+  adaptive_icon_foreground: "icons/adaptive_launcher_icon.png"
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
