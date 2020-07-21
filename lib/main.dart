@@ -1,4 +1,5 @@
 import 'package:clack/views/full_image.dart';
+import 'package:clack/views/sound_group.dart';
 import 'package:flutter/material.dart';
 
 import 'views/video_feed.dart';
@@ -13,7 +14,8 @@ class MyApp extends StatelessWidget {
         initialRoute: VideoFeed.routeName,
         routes: {
           VideoFeed.routeName: (ctx) => VideoFeed(),
-          FullImage.routeName: (ctx) => FullImage()
+          FullImage.routeName: (ctx) => FullImage(),
+          SoundGroup.routeName: (ctx) => SoundGroup()
         });
   }
 }

@@ -314,7 +314,16 @@ class _VideoPageState extends State<VideoPage>
               ],
             ),
             GestureDetector(
-                onTap: () {},
+                onTap: () {
+                  // Stop the video
+                  _manuallyPaused = true;
+                  _controller.pause();
+
+                  // Open the page
+                  Navigator.pushNamed(context, SoundGroup.routeName,
+                      arguments: SoundGroupArguments(
+                          API.getVideosForMusic(widget.videoInfo.music, 20)));
+                },
                 child: AnimatedBuilder(
                   animation: _animation,
                   child: CircleAvatar(

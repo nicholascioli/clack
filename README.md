@@ -22,6 +22,7 @@ Coming soon.
 ## Features
 
 * Browse trending videos
+* Browse videos by music
 * View Video stats
 	* Like count
 	* Comment Count
