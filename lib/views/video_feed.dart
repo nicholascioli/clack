@@ -27,7 +27,14 @@ class VideoFeedArgs {
   /// has liked.
   final int length;
 
-  const VideoFeedArgs(this.stream, this.startIndex, this.length);
+  /// Whether or not to show the side page with author info
+  ///
+  /// This side page is shown optionally when browsing a video that is not nested
+  /// in a users profile. By default, we show the page.
+  final bool showUserInfo;
+
+  const VideoFeedArgs(this.stream, this.startIndex, this.length,
+      {this.showUserInfo = true});
 }
 
 /// A view showing a feed of videos and other options
@@ -75,6 +82,9 @@ class _VideoFeedState extends State<VideoFeed> {
   /// in the [initState()] method.
   bool _hasInit = false;
 
+  /// Whether or not to show the user info page
+  bool _showUserInfo = true;
+
   /// The page to show on the left tab
   VideoFeedActivePage _activePage = VideoFeedActivePage.VIDEO;
 
@@ -87,6 +97,7 @@ class _VideoFeedState extends State<VideoFeed> {
       this._currentIndex = args.startIndex;
       this._length = args.length;
       this._isNested = true;
+      this._showUserInfo = args.showUserInfo;
     }
     this._hasInit = true;
 
@@ -94,7 +105,7 @@ class _VideoFeedState extends State<VideoFeed> {
     this._videos.setOnChanged(() => setState(() {}));
 
     // Return the view
-    return this._isNested ? _buildVideoPager() : _buildVideos();
+    return this._showUserInfo ? _buildVideos() : _buildVideoWithBar();
   }
 
   /// Generates the TabView containing the variable left page and [UserInfo] right page
@@ -123,7 +134,7 @@ class _VideoFeedState extends State<VideoFeed> {
             : null,
         extendBodyBehindAppBar: true,
         backgroundColor: Colors.black,
-        bottomNavigationBar: _buildBottomBar(),
+        bottomNavigationBar: !_isNested ? _buildBottomBar() : null,
         body: views[_activePage]());
   }
 
@@ -142,7 +153,7 @@ class _VideoFeedState extends State<VideoFeed> {
                     child: SpinKitWave(color: Colors.white, size: 50.0));
               } else {
                 return VideoPage(
-                    isNested: _isNested,
+                    showUserPage: _showUserInfo,
                     videoInfo: _videos[i],
                     index: i,
                     currentIndex: _currentIndex);

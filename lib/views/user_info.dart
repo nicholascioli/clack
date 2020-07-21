@@ -276,7 +276,8 @@ class _UserInfoState extends State<UserInfo>
                         onTap: () => Navigator.pushNamed(
                             context, VideoFeed.routeName,
                             arguments: VideoFeedArgs(
-                                stream, index, snapshot.data.stats.videoCount)),
+                                stream, index, snapshot.data.stats.videoCount,
+                                showUserInfo: false)),
                         child: Container(
                             color: Colors.black,
                             child: Hero(

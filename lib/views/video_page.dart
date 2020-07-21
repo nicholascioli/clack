@@ -1,5 +1,7 @@
+import 'package:clack/api.dart';
 import 'package:clack/utility.dart';
 import 'package:clack/api/video_result.dart';
+import 'package:clack/views/sound_group.dart';
 import 'package:flutter/material.dart';
 import 'package:icon_shadow/icon_shadow.dart';
 import 'package:marquee/marquee.dart';
@@ -16,21 +18,20 @@ import 'package:wakelock/wakelock.dart';
 class VideoPage extends StatefulWidget {
   final VideoResult videoInfo;
   final int index, currentIndex;
-  final bool isNested;
+  final bool showUserPage;
 
   /// Construct a [VideoPage]
   ///
-  /// * [isNested] Is this view in a nested [VideoFeed]? Used for rendering
-  ///   a back arrow
+  /// * [showUserPage] Is this view part of a PageView with the user info page?
   /// * [videoInfo] The info of the video to show
   /// * [index] The index of this video in relation to the owning [VideoFeed]
   /// * [currentIndex] The currently active index in the owning [VideoFeed]
   const VideoPage(
       {Key key,
-      @required this.isNested,
       @required this.videoInfo,
       @required this.index,
-      @required this.currentIndex})
+      @required this.currentIndex,
+      this.showUserPage = true})
       : super(key: key);
 
   @override
@@ -268,7 +269,7 @@ class _VideoPageState extends State<VideoPage>
                           widget.videoInfo.author.avatarThumb.toString()),
                     ),
                     onPressed: () {
-                      if (!widget.isNested)
+                      if (!widget.showUserPage)
                         DefaultTabController.of(context).index = 1;
                     }),
                 SizedBox(
@@ -316,12 +317,10 @@ class _VideoPageState extends State<VideoPage>
                 onTap: () {},
                 child: AnimatedBuilder(
                   animation: _animation,
-                  child: GestureDetector(
-                    onTap: () => showNotImplemented(context),
-                    child: CircleAvatar(
-                        radius: _musicRadius,
-                        backgroundImage: NetworkImage(
-                            widget.videoInfo.music.coverThumb.toString())),
+                  child: CircleAvatar(
+                    radius: _musicRadius,
+                    backgroundImage: NetworkImage(
+                        widget.videoInfo.music.coverThumb.toString()),
                   ),
                   builder: (BuildContext context, Widget _widget) {
                     return new Transform.rotate(
