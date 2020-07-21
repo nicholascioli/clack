@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'dart:math';
 
 import 'package:clack/api/author_result.dart';
+import 'package:clack/api/music_result.dart';
 import 'package:clack/api/video_result.dart';
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
@@ -41,7 +42,7 @@ class ApiResult<T> {
 ///
 class ApiStream<T> {
   int _maxCursor = 0;
-  int _count = 0;
+  int count = 0;
   Future<ApiResult<T>> Function(int count, int maxCursor) _stream;
 
   // Used for checking if we can fetch more
@@ -49,7 +50,7 @@ class ApiStream<T> {
   bool hasMore = true;
 
   // Internal list used for caching network results
-  List<T> _results = [];
+  List<T> _results;
 
   // Callback for when data changes
   void Function() _cb;
@@ -57,7 +58,9 @@ class ApiStream<T> {
   /// Construct an [ApiStream]
   ///
   /// Avoid calling this directly in favor of [API]'s static methods.
-  ApiStream(this._count, this._stream);
+  ApiStream(this.count, this._stream, {List<T> initialResults}) {
+    this._results = initialResults != null ? initialResults : [];
+  }
 
   // The internal list grows linearly starting from 0.
   // Note: This should probably be fixed to allow for 'seeking'
@@ -66,10 +69,12 @@ class ApiStream<T> {
   //   the next max cursor to fetch from.
   // Note2: We use the count as an indication of how frequently to fetch (20% of
   //   the count is defined as the bounds for fetching)
-  operator [](int i) {
+  T operator [](int i) {
     // If we see that we need more, fetch in the background
-    if (i >= _results.length - max(1, (_count * 0.2).floor()))
+    if (i >= _results.length - max(1, (count * 0.2).floor()))
       _next().then((value) {
+        print("API STREAM FETCHED: $value");
+
         // Do nothing if we get nothing
         if (value.isEmpty) return;
 
@@ -105,6 +110,18 @@ class ApiStream<T> {
   /// ```
   void setOnChanged(void Function() cb) => this._cb = cb;
 
+  ApiStream<U> transform<U>(U Function(T) transformer) {
+    return ApiStream(count, (count, cursor) async {
+      final res = await _stream(count, cursor);
+      if (res == null) return Future.value(null);
+
+      // Map all of the stream
+      final trans = ApiResult<U>(
+          res.hasMore, res.nextCursor, res.results.map((e) => transformer(e)));
+      return Future.value(trans);
+    }, initialResults: _results.map((e) => transformer(e)).toList());
+  }
+
   // Fetches the next set of `count` results.
   Future<Iterable<T>> _next() async {
     // Stop multiple requests / when no more videos are available
@@ -114,8 +131,12 @@ class ApiStream<T> {
 
     ApiResult<T> r;
     try {
-      r = await _stream(_count, _maxCursor);
+      r = await _stream(count, _maxCursor);
+      print("Next: $r");
       _maxCursor = r.nextCursor;
+    } catch (e) {
+      print("WARNING: Fetching failed with: $e");
+      print("WARNING: Failing silently...");
     } finally {
       isFetching = false;
     }
@@ -180,6 +201,14 @@ class API {
       VideoResult video, int count) {
     throw Exception("Not Implemented");
   }
+
+  static ApiStream<MusicResult> getVideosForMusic(Music m, int count) =>
+      ApiStream(count, (count, maxCursor) {
+        String url =
+            'https://m.tiktok.com/share/item/list?secUid=&id=${m.id}&type=$TYPE_AUDIO_VIDEOS&count=$count&minCursor=0&maxCursor=$maxCursor&shareUid=';
+
+        return _getVideosForMusic(url, count, maxCursor);
+      });
 
   /// Get an [author]'s extended info.
   ///
@@ -253,6 +282,44 @@ class API {
       int maxCursor = int.tryParse(asJson["maxCursor"]);
       return ApiResult(
           hasMore, maxCursor, array.map((e) => VideoResult.fromJson(e)));
+    } else {
+      // If the server did not return a 200 OK response,
+      // then throw an exception.
+      throw Exception('Failed to fetch videos from $url: ${response.body}');
+    }
+  }
+
+  static Future<ApiResult<MusicResult>> _getVideosForMusic(
+      String url, int count, int cursor) async {
+    // Sign the url using TT JS
+    // Note: We construct a headless webview first and then dispose of
+    //   it after we finish generating the code
+    await _webView.run();
+    String code = await sign(url);
+    String signedUrl = "$url&_signature=$code";
+    await _webView.dispose();
+    print("GOT URL: $signedUrl");
+
+    // Make a request for the videos
+    var response =
+        await http.get(signedUrl, headers: {"User-Agent": _USER_AGENT});
+
+    if (response.statusCode == 200) {
+      // If the server did return a 200 OK response,
+      // then parse the JSON.
+      // print("GOT RESPONSE: ${response.body}");
+      dynamic asJson = json.decode(response.body)["body"];
+      List<dynamic> array =
+          asJson["itemListData"]; // different from stock _getVideos
+
+      // Short out if we get no results
+      if (array == null) return ApiResult(false, cursor, []);
+
+      bool hasMore = asJson["hasMore"];
+      int maxCursor = int.tryParse(asJson["maxCursor"]);
+
+      return ApiResult(
+          hasMore, maxCursor, array.map((e) => MusicResult.fromJson(e)));
     } else {
       // If the server did not return a 200 OK response,
       // then throw an exception.

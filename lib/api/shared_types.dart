@@ -165,6 +165,9 @@ class Video {
   /// URL to the full-quality version of the video
   final Uri downloadAddr;
 
+  /// Whether or not the video is originally of this author
+  final bool isOriginal;
+
   Video(
       {this.id,
       this.width,
@@ -175,7 +178,8 @@ class Video {
       this.dynamicCover,
       this.originCover,
       this.playAddr,
-      this.downloadAddr});
+      this.downloadAddr,
+      this.isOriginal});
 
   /// Construct a [Video] object from a supplied [json] object.
   ///
@@ -191,7 +195,8 @@ class Video {
         dynamicCover: Uri.parse(json["dynamicCover"]),
         originCover: Uri.parse(json["originCover"]),
         playAddr: Uri.parse(json["playAddr"]),
-        downloadAddr: Uri.parse(json["downloadAddr"]));
+        downloadAddr: Uri.parse(json["downloadAddr"]),
+        isOriginal: json["isOriginal"]);
   }
 }
 
