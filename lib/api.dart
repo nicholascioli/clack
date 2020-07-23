@@ -110,6 +110,16 @@ class ApiStream<T> {
   /// ```
   void setOnChanged(void Function() cb) => this._cb = cb;
 
+  /// Transform this [ApiStream] using a mapping function
+  ///
+  /// In the event that you need an existing [ApiStream] to wrap a different
+  /// data structure (such as when converting [MusicResult] to a [VideoResult])
+  /// simply pass a mapping function that, given the original wrapped data
+  /// structure, generates the new data structure. This transformation is then
+  /// applied to every currently loaded result and kept in order to be used
+  /// when requesting the [next()] set of results.
+  ///
+  /// For an in-depth example, see [SoundGroup].
   ApiStream<U> transform<U>(U Function(T) transformer) {
     return ApiStream(count, (count, cursor) async {
       final res = await _stream(count, cursor);
@@ -336,6 +346,12 @@ class API {
   //   throw Exception("Not Implemented");
   // }
 
+  /// Signs a URL using TT's obfuscated JS
+  ///
+  /// Most requests, if not all, need be signed using TT's proprietary signing
+  /// algorithm. To avoid the need to connect to TT's website every time we
+  /// create a new request, this function loads the pre-downloaded JS script
+  /// and passes it through a WebView.
   static Future<String> sign(String url) async {
     // Now execute
     var givenJS = rootBundle.loadString('js/acrawler.js');
