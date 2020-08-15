@@ -19,6 +19,7 @@ class VideoPage extends StatefulWidget {
   final VideoResult videoInfo;
   final int index, currentIndex;
   final bool showUserPage;
+  final String heroTag;
 
   /// Construct a [VideoPage]
   ///
@@ -31,7 +32,8 @@ class VideoPage extends StatefulWidget {
       @required this.videoInfo,
       @required this.index,
       @required this.currentIndex,
-      this.showUserPage = true})
+      this.showUserPage = true,
+      this.heroTag})
       : super(key: key);
 
   @override
@@ -153,7 +155,7 @@ class _VideoPageState extends State<VideoPage>
       // Note: This is wrapped in a [Hero] so that this [VideoPage] can animate
       //   between itself and any page that shows an overview of videos.
       Hero(
-          tag: "video_page_${widget.index}",
+          tag: "${widget.heroTag}_video_page_${widget.index}",
           child: ClipRect(
               child: OverflowBox(
                   maxHeight: double.infinity,
@@ -177,16 +179,15 @@ class _VideoPageState extends State<VideoPage>
       // Then we show relevant text info
       Align(
           alignment: Alignment.bottomLeft,
-          child: Row(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              mainAxisSize: MainAxisSize.max,
-              children: [
-                SizedBox(width: 10),
-                _buildTextInfo(),
-                Spacer(),
-                _buildButtons(),
-                SizedBox(width: 5)
-              ])),
+          child: Padding(
+              padding: EdgeInsets.symmetric(horizontal: 5),
+              child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  mainAxisSize: MainAxisSize.max,
+                  children: [
+                    Expanded(child: _buildTextInfo()),
+                    _buildButtons(),
+                  ]))),
       // Then we (optionally) show the controls
       Align(
         alignment: Alignment.center,
@@ -213,28 +214,28 @@ class _VideoPageState extends State<VideoPage>
               "@${widget.videoInfo.author.uniqueId}",
               style: _usernameTextStyle,
             ),
+            (widget.videoInfo.desc.isNotEmpty
+                ? SizedBox(height: 20)
+                : Container()),
+            Text(
+              widget.videoInfo.desc,
+              style: _textStyle,
+              softWrap: true,
+            ),
             SizedBox(height: 20),
-            Container(
-                constraints: BoxConstraints(maxWidth: 300),
-                child: Text(
-                  widget.videoInfo.desc,
-                  style: _textStyle,
-                )),
-            SizedBox(height: 20),
-            Align(
-                alignment: Alignment.centerLeft,
-                child: Row(mainAxisSize: MainAxisSize.min, children: [
-                  IconShadowWidget(
-                    Icon(
-                      Icons.radio,
-                      color: Colors.white,
-                      size: 30,
-                    ),
-                    shadowColor: Colors.black,
-                  ),
-                  Container(
-                      width: 250,
-                      height: 20,
+            Row(mainAxisSize: MainAxisSize.max, children: [
+              IconShadowWidget(
+                Icon(
+                  Icons.radio,
+                  color: Colors.white,
+                  size: 30,
+                ),
+                shadowColor: Colors.black,
+              ),
+              Expanded(
+                  child: Container(
+                      padding: EdgeInsets.symmetric(horizontal: 5),
+                      height: _textStyle.fontSize * 1.5,
                       child: Marquee(
                         text:
                             "${widget.videoInfo.music.title} - ${widget.videoInfo.music.authorName}",
@@ -242,12 +243,12 @@ class _VideoPageState extends State<VideoPage>
                         blankSpace: 20.0,
                         velocity: 50.0,
                         pauseAfterRound: Duration(seconds: 2),
-                        showFadingOnlyWhenScrolling: true,
+                        showFadingOnlyWhenScrolling: false,
                         fadingEdgeStartFraction: 0.1,
                         fadingEdgeEndFraction: 0.1,
-                        startPadding: 10.0,
-                      ))
-                ])),
+                        startPadding: 5.0,
+                      )))
+            ]),
             SizedBox(height: 20)
           ]);
 

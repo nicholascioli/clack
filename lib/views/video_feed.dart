@@ -1,7 +1,9 @@
 import 'package:clack/api.dart';
 import 'package:clack/utility.dart';
 import 'package:clack/api/video_result.dart';
+import 'package:clack/views/discover.dart';
 import 'package:clack/views/intro_screen.dart';
+import 'package:clack/views/notifications_view.dart';
 import 'package:clack/views/search.dart';
 import 'package:clack/views/user_info.dart';
 import 'package:clack/views/video_page.dart';
@@ -33,8 +35,14 @@ class VideoFeedArgs {
   /// in a users profile. By default, we show the page.
   final bool showUserInfo;
 
+  /// Hero tag for animation transition
+  ///
+  /// Hero tags must be unique between views, so specify a unique prefix if
+  /// multiple video lists are shown
+  final String heroTag;
+
   const VideoFeedArgs(this.stream, this.startIndex, this.length,
-      {this.showUserInfo = true});
+      {this.showUserInfo = true, this.heroTag = ""});
 }
 
 /// A view showing a feed of videos and other options
@@ -85,6 +93,8 @@ class _VideoFeedState extends State<VideoFeed> {
   /// Whether or not to show the user info page
   bool _showUserInfo = true;
 
+  String _heroTag = "";
+
   /// The page to show on the left tab
   VideoFeedActivePage _activePage = VideoFeedActivePage.VIDEO;
 
@@ -98,6 +108,7 @@ class _VideoFeedState extends State<VideoFeed> {
       this._length = args.length;
       this._isNested = true;
       this._showUserInfo = args.showUserInfo;
+      this._heroTag = args.heroTag;
     }
     this._hasInit = true;
 
@@ -119,11 +130,11 @@ class _VideoFeedState extends State<VideoFeed> {
 
   /// Generates the multi-page left tab
   Widget _buildVideoWithBar() {
+    final cb = (v) => setState(() => _activePage = v);
     final views = Map.from({
       VideoFeedActivePage.VIDEO: () => _buildVideoPager(),
-      VideoFeedActivePage.SEARCH: () =>
-          SearchView((v) => setState(() => _activePage = v)),
-      VideoFeedActivePage.NOTIFICATION: () => IntroScreen(),
+      VideoFeedActivePage.SEARCH: () => Discover(cb),
+      VideoFeedActivePage.NOTIFICATION: () => NotificationView(cb),
       VideoFeedActivePage.PROFILE: () => IntroScreen()
     });
     return Scaffold(
@@ -156,7 +167,8 @@ class _VideoFeedState extends State<VideoFeed> {
                     showUserPage: _showUserInfo,
                     videoInfo: _videos[i],
                     index: i,
-                    currentIndex: _currentIndex);
+                    currentIndex: _currentIndex,
+                    heroTag: _heroTag);
               }
             },
             onPageChanged: (page) {

@@ -277,11 +277,11 @@ class _UserInfoState extends State<UserInfo>
                             context, VideoFeed.routeName,
                             arguments: VideoFeedArgs(
                                 stream, index, snapshot.data.stats.videoCount,
-                                showUserInfo: false)),
+                                showUserInfo: false, heroTag: "userInfo")),
                         child: Container(
                             color: Colors.black,
                             child: Hero(
-                                tag: "video_page_$index",
+                                tag: "userInfo_video_page_$index",
                                 child: Stack(children: [
                                   AspectRatio(
                                       aspectRatio: 1,

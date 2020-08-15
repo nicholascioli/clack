@@ -67,8 +67,12 @@ class _SoundGroupState extends State<SoundGroup> {
 
     return Scaffold(
         appBar: AppBar(
-          actions: [IconButton(icon: Icon(Icons.share), onPressed: () => null)],
-        ),
+            actions: [
+              IconButton(icon: Icon(Icons.share), onPressed: () => null)
+            ],
+            title: Text(_videos[0] == null
+                ? "..."
+                : "${_videos[0].music.title} by ${_videos[0].music.authorName}")),
         body: _videos[0] == null
             ? Center(
                 child: SpinKitCubeGrid(color: Colors.black),
@@ -166,12 +170,13 @@ class _SoundGroupState extends State<SoundGroup> {
 
                 // Start the VideoFeed
                 Navigator.pushNamed(context, VideoFeed.routeName,
-                    arguments: VideoFeedArgs(_videos, index, null));
+                    arguments: VideoFeedArgs(_videos, index, null,
+                        heroTag: "soundGroup"));
               },
               child: Container(
                   color: Colors.black,
                   child: Hero(
-                      tag: "video_page_$index",
+                      tag: "soundGroup_video_page_$index",
                       child: Stack(children: [
                         AspectRatio(
                             aspectRatio: 1,

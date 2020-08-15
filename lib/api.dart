@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'dart:math';
 
 import 'package:clack/api/author_result.dart';
+import 'package:clack/api/hashtag_result.dart';
 import 'package:clack/api/music_result.dart';
 import 'package:clack/api/video_result.dart';
 import 'package:flutter/services.dart' show rootBundle;
@@ -53,7 +54,7 @@ class ApiStream<T> {
   List<T> _results;
 
   // Callback for when data changes
-  void Function() _cb;
+  void Function() _cb = () {};
 
   /// Construct an [ApiStream]
   ///
@@ -61,6 +62,9 @@ class ApiStream<T> {
   ApiStream(this.count, this._stream, {List<T> initialResults}) {
     this._results = initialResults != null ? initialResults : [];
   }
+
+  /// Return a const inner list
+  Map<int, T> get results => _results.asMap();
 
   // The internal list grows linearly starting from 0.
   // Note: This should probably be fixed to allow for 'seeking'
@@ -71,7 +75,7 @@ class ApiStream<T> {
   //   the count is defined as the bounds for fetching)
   T operator [](int i) {
     // If we see that we need more, fetch in the background
-    if (i >= _results.length - max(1, (count * 0.2).floor()))
+    if (hasMore && i >= _results.length - max(1, (count * 0.2).floor()))
       _next().then((value) {
         print("API STREAM FETCHED: $value");
 
@@ -220,6 +224,60 @@ class API {
         return _getVideosForMusic(url, count, maxCursor);
       });
 
+  static ApiStream<HashtagResult> getTrendingHashtags(int count) => ApiStream(
+      count, (count, maxCursor) => _getTrendingHashtag(count, maxCursor));
+
+  static ApiStream<VideoResult> getVideosForHashtag(
+          HashtagResult ht, int count) =>
+      ApiStream(count, (count, maxCursor) {
+        final String url =
+            "https://m.tiktok.com/share/item/list?secUid=&id=${ht.id}&type=$TYPE_TAG_VIDEOS&count=$count&minCursor=0&maxCursor=$maxCursor&shareUid=";
+        return _getVideosForMusic(url, count, maxCursor);
+      }).transform((MusicResult r) => VideoResult(
+          id: r.id,
+          createTime: r.createTime,
+          desc: r.text,
+          author: r.author,
+          music: r.musicInfo,
+          video: r.video,
+          stats: r.stats));
+
+  static Future<ApiResult<HashtagResult>> _getTrendingHashtag(
+      int count, int cursor) async {
+    String url =
+        "https://m.tiktok.com/api/discover/challenge/?discoverType=0&needItemList=false&keyWord=&offset=$cursor&count=$count&language=en&appId=1233";
+
+    // Sign the url using TT JS
+    // Note: We construct a headless webview first and then dispose of
+    //   it after we finish generating the code
+    await _webView.run();
+    String code = await sign(url);
+    String signedUrl = "$url&_signature=$code";
+    await _webView.dispose();
+    print("GOT URL: $signedUrl");
+
+    // Make a request for the user
+    var response =
+        await http.get(signedUrl, headers: {"User-Agent": _USER_AGENT});
+
+    if (response.statusCode == 200) {
+      // If the server did return a 200 OK response,
+      // then parse the JSON.
+      dynamic asJson = json.decode(response.body);
+      List<dynamic> hashtags = asJson["challengeInfoList"];
+
+      int offset = int.tryParse(asJson["offset"]);
+
+      // TODO: How do we know that there isn't more?
+      return ApiResult(offset != 0 && offset != cursor, offset,
+          hashtags.map((h) => HashtagResult.fromJson(h)));
+    } else {
+      // If the server did not return a 200 OK response,
+      // then throw an exception.
+      throw Exception('Failed to fetch hashtags');
+    }
+  }
+
   /// Get an [author]'s extended info.
   ///
   /// This returns a [Future] as it requires network requests.
@@ -232,7 +290,6 @@ class API {
     //   it after we finish generating the code
     await _webView.run();
     String code = await sign(url);
-    // String code = "_02B4Z6wo00f01i39SdgAAIBCH934gt2LpXIt.E1AANSG77";
     String signedUrl = "$url&_signature=$code";
     await _webView.dispose();
     print("GOT URL: $signedUrl");
