@@ -270,7 +270,7 @@ class _VideoPageState extends State<VideoPage>
                           widget.videoInfo.author.avatarThumb.toString()),
                     ),
                     onPressed: () {
-                      if (!widget.showUserPage)
+                      if (widget.showUserPage)
                         DefaultTabController.of(context).index = 1;
                     }),
                 SizedBox(
