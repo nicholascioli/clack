@@ -146,6 +146,6 @@ class _DiscoverState extends State<Discover> {
   Future<bool> _handleBack() {
     widget.setActive(VideoFeedActivePage.VIDEO);
 
-    Future.value(false);
+    return Future.value(false);
   }
 }
