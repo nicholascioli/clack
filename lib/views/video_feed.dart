@@ -93,6 +93,12 @@ class _VideoFeedState extends State<VideoFeed> {
   /// Whether or not to show the user info page
   bool _showUserInfo = true;
 
+  /// Are we currently on the Video page?
+  ///
+  /// This is used for disabling the [UserInfoPage] whenever
+  /// we have switched to another page using the bottom navigation bar.
+  bool _onVideoPage = true;
+
   String _heroTag = "";
 
   /// The page to show on the left tab
@@ -116,7 +122,9 @@ class _VideoFeedState extends State<VideoFeed> {
     this._videos.setOnChanged(() => setState(() {}));
 
     // Return the view
-    return this._showUserInfo ? _buildVideos() : _buildVideoWithBar();
+    return (this._showUserInfo && this._onVideoPage)
+        ? _buildVideos()
+        : _buildVideoWithBar();
   }
 
   /// Generates the TabView containing the variable left page and [UserInfo] right page
@@ -192,7 +200,12 @@ class _VideoFeedState extends State<VideoFeed> {
               onPressed: () {
                 // Allow for switching between the states
                 print("PUSHED! Setting from $_activePage to $active");
-                if (_activePage != active) setState(() => _activePage = active);
+                if (_activePage != active) {
+                  setState(() => _activePage = active);
+
+                  // Disable tabbing if not on the main page
+                  this._onVideoPage = _activePage == VideoFeedActivePage.VIDEO;
+                }
               }),
           _activePage == active
               ? Divider(
