@@ -4,6 +4,7 @@ import 'package:clack/api/video_result.dart';
 import 'package:clack/views/discover.dart';
 import 'package:clack/views/intro_screen.dart';
 import 'package:clack/views/notifications_view.dart';
+import 'package:clack/views/profile_view.dart';
 import 'package:clack/views/search.dart';
 import 'package:clack/views/user_info.dart';
 import 'package:clack/views/video_page.dart';
@@ -146,7 +147,7 @@ class _VideoFeedState extends State<VideoFeed> {
       VideoFeedActivePage.VIDEO: () => _buildVideoPager(),
       VideoFeedActivePage.SEARCH: () => Discover(cb),
       VideoFeedActivePage.NOTIFICATION: () => NotificationView(cb),
-      VideoFeedActivePage.PROFILE: () => IntroScreen()
+      VideoFeedActivePage.PROFILE: () => ProfileView(cb)
     });
     return Scaffold(
         // We need the appBar to only show here when we have the videoPager, so that
