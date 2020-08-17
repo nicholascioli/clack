@@ -11,7 +11,6 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
-import 'package:flutter_sticky_header/flutter_sticky_header.dart';
 import 'package:icon_shadow/icon_shadow.dart';
 import 'package:share/share.dart';
 
@@ -68,11 +67,6 @@ class _UserInfoState extends State<UserInfo>
   /// The [ApiStream]<[VideoResult]> of the [Author]'s liked videos
   ApiStream<VideoResult> _authorFavoritedVideos;
 
-  /// Tab controller for the video TabView
-  ///
-  /// This contains both the [Author]'s videos and liked videos
-  TabController _tabController;
-
   @override
   void initState() {
     super.initState();
@@ -85,156 +79,158 @@ class _UserInfoState extends State<UserInfo>
 
     _authorVideos.setOnChanged(() => setState(() {}));
     _authorFavoritedVideos.setOnChanged(() => setState(() {}));
-
-    // Set up the nested controller
-    _tabController = TabController(length: 2, vsync: this);
-  }
-
-  @override
-  void dispose() {
-    _tabController.dispose();
-    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) => WillPopScope(
       onWillPop: () => _handleBack(context),
       child: Scaffold(
-        appBar: AppBar(
-          title: Text(_author.nickname),
-          centerTitle: true,
-          leading: IconButton(
-            icon: Icon(Icons.arrow_back),
-            onPressed: () => _handleBack(context),
+          appBar: AppBar(
+            title: Text(_author.nickname),
+            centerTitle: true,
+            leading: IconButton(
+              icon: Icon(Icons.arrow_back),
+              onPressed: () => _handleBack(context),
+            ),
+            actions: [
+              IconButton(
+                  icon: Icon(Icons.share),
+                  onPressed: () => _authorResult.then((authorResult) {
+                        Share.share(getAuthorShare(authorResult),
+                            subject:
+                                "Check out @${authorResult.user.uniqueId} TikTok!");
+                      }))
+            ],
           ),
-          actions: [
-            IconButton(
-                icon: Icon(Icons.share),
-                onPressed: () => _authorResult.then((authorResult) {
-                      Share.share(getAuthorShare(authorResult),
-                          subject:
-                              "Check out @${authorResult.user.uniqueId} TikTok!");
-                    }))
-          ],
-        ),
-        body: CustomScrollView(
-          slivers: [
-            SliverList(
-                delegate: SliverChildListDelegate.fixed([
-              SizedBox(height: 20),
-              // Profile Picture
-              Row(children: [
-                Spacer(),
-                Expanded(
-                    child: GestureDetector(
-                        onTap: () => Navigator.pushNamed(
-                            context, FullImage.routeName,
-                            arguments:
-                                FullImageArgs(_author.avatarLarger.toString())),
-                        // Here we use a [Hero] so that the thumbnail can
-                        // animate to and back from the [FullImage] when tapped
-                        child: Hero(
-                            tag: "full_image",
-                            child: AspectRatio(
-                                aspectRatio: 1,
-                                child: CircleAvatar(
-                                  backgroundImage: NetworkImage(
-                                      _author.avatarMedium.toString()),
-                                ))))),
-                Spacer()
-              ]),
-              SizedBox(height: 10),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [Text("@${_author.uniqueId}", style: userTextStyle)],
-              ),
-              SizedBox(height: 15),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: [
-                  _buildStatsColumn((v) => v.stats.followingCount, "Following"),
-                  _buildStatsColumn((v) => v.stats.followerCount, "Followers"),
-                  _buildStatsColumn((v) => v.stats.heart, "Hearts")
-                ],
-              ),
-              SizedBox(height: 10),
-              // TODO: Make this change between 'Follow' and 'Message' / 'IconButton(?)
-              //   based on whether the logged in user is following or not.
-              ButtonBar(
-                alignment: MainAxisAlignment.center,
-                children: [
-                  OutlineButton(
-                    onPressed: () {},
-                    child: Text("Message"),
-                    textColor: Colors.black,
-                  ),
-                  OutlineButton.icon(
-                    onPressed: null,
-                    icon: Icon(Icons.person_add),
-                    label: Container(),
-                    textColor: Colors.black,
-                  )
-                ],
-              ),
-              Padding(
-                  padding:
-                      EdgeInsetsDirectional.only(start: 30, end: 30, top: 15),
-                  child: Text(
-                    _author.signature,
-                    style: softTextStyle,
-                    textAlign: TextAlign.center,
-                  )),
-              SizedBox(height: 30),
-            ])),
-            SliverStickyHeader(
-                header: Container(
-                    decoration: BoxDecoration(
-                        color: Theme.of(context).canvasColor,
-                        boxShadow: [
-                          BoxShadow(
-                              color: Colors.grey,
-                              blurRadius: 3,
-                              offset: Offset(0, 3))
-                        ]),
-                    child: TabBar(
-                      controller: _tabController,
-                      labelColor: Colors.black,
-                      unselectedLabelColor: Colors.grey,
-                      tabs: [
-                        Tab(icon: Icon(Icons.list)),
-                        Tab(
-                            icon: Stack(
-                                alignment: Alignment.bottomRight,
-                                children: [
-                              Icon(Icons.favorite_border),
-                              Padding(
-                                  padding: EdgeInsets.only(bottom: 3),
-                                  child: !_author.openFavorite
-                                      ? Icon(
-                                          Icons.lock,
-                                          size: 12,
-                                        )
-                                      : null)
-                            ]))
+          body: DefaultTabController(
+              length: 2,
+              // Here we wrap in a NestedScrollView so that the nested Grid
+              //   view containing the videos can be scrolled together with the
+              //   general user info.
+              child: NestedScrollView(
+                  headerSliverBuilder: (context, innerBoxIsScrolled) => [
+                        SliverList(
+                            delegate: SliverChildListDelegate.fixed([
+                          SizedBox(height: 20),
+                          // Profile Picture
+                          Row(children: [
+                            Spacer(),
+                            Expanded(
+                                child: GestureDetector(
+                                    onTap: () => Navigator.pushNamed(
+                                        context, FullImage.routeName,
+                                        arguments: FullImageArgs(
+                                            _author.avatarLarger.toString())),
+                                    // Here we use a [Hero] so that the thumbnail can
+                                    // animate to and back from the [FullImage] when tapped
+                                    child: Hero(
+                                        tag: "full_image",
+                                        child: AspectRatio(
+                                            aspectRatio: 1,
+                                            child: CircleAvatar(
+                                              backgroundImage: NetworkImage(
+                                                  _author.avatarMedium
+                                                      .toString()),
+                                            ))))),
+                            Spacer()
+                          ]),
+                          SizedBox(height: 10),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Text("@${_author.uniqueId}", style: userTextStyle)
+                            ],
+                          ),
+                          SizedBox(height: 15),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                            children: [
+                              _buildStatsColumn(
+                                  (v) => v.stats.followingCount, "Following"),
+                              _buildStatsColumn(
+                                  (v) => v.stats.followerCount, "Followers"),
+                              _buildStatsColumn((v) => v.stats.heart, "Hearts")
+                            ],
+                          ),
+                          SizedBox(height: 10),
+                          // TODO: Make this change between 'Follow' and 'Message' / 'IconButton(?)
+                          //   based on whether the logged in user is following or not.
+                          ButtonBar(
+                            alignment: MainAxisAlignment.center,
+                            children: [
+                              OutlineButton(
+                                onPressed: () {},
+                                child: Text("Message"),
+                                textColor: Colors.black,
+                              ),
+                              OutlineButton.icon(
+                                onPressed: null,
+                                icon: Icon(Icons.person_add),
+                                label: Container(),
+                                textColor: Colors.black,
+                              )
+                            ],
+                          ),
+                          Padding(
+                              padding: EdgeInsetsDirectional.only(
+                                  start: 30, end: 30, top: 15),
+                              child: Text(
+                                _author.signature,
+                                style: softTextStyle,
+                                textAlign: TextAlign.center,
+                              )),
+                          SizedBox(height: 30),
+                        ])),
+                        // We need a SliverOverlapAbsorber here so that overlap
+                        //    events in the nested child effect the parent
+                        //  e.g. Everything scolls together
+                        SliverOverlapAbsorber(
+                            handle:
+                                NestedScrollView.sliverOverlapAbsorberHandleFor(
+                                    context),
+                            sliver: SliverAppBar(
+                                excludeHeaderSemantics: true,
+                                backgroundColor: Colors.white,
+                                forceElevated: innerBoxIsScrolled,
+                                pinned: true,
+                                title: TabBar(
+                                  indicator: BoxDecoration(),
+                                  labelColor: Colors.black,
+                                  unselectedLabelColor: Colors.grey,
+                                  tabs: [
+                                    Tab(icon: Icon(Icons.list)),
+                                    Tab(
+                                        icon: Stack(
+                                            alignment: Alignment.bottomRight,
+                                            children: [
+                                          Icon(Icons.favorite_border),
+                                          Padding(
+                                              padding:
+                                                  EdgeInsets.only(bottom: 3),
+                                              child: !_author.openFavorite
+                                                  ? Icon(
+                                                      Icons.lock,
+                                                      size: 12,
+                                                    )
+                                                  : null)
+                                        ]))
+                                  ],
+                                )))
                       ],
-                    )),
-                sliver: SliverFillRemaining(
-                    // Here we use an [ExtendedTabBarView] so that the nested tab view
-                    // can scroll its parent [VideoFeed]
-                    child: ExtendedTabBarView(
-                        controller: _tabController,
+                  // TODO: Figure out reliable padding for pinned SliverAppBar above
+                  body: Padding(
+                      padding: EdgeInsets.only(top: 40),
+                      child: ExtendedTabBarView(
                         linkWithAncestor: true,
                         children: [
-                      _buildVideoList(_authorVideos),
-                      _author.openFavorite
-                          ? _buildVideoList(_authorFavoritedVideos)
-                          : Center(
-                              child: Text(
-                                  "@${_author.uniqueId} has hidden their liked videos."))
-                    ])))
-          ],
-        ),
-      ));
+                          _buildVideoList(_authorVideos),
+                          _author.openFavorite
+                              ? _buildVideoList(_authorFavoritedVideos)
+                              : Center(
+                                  child: Text(
+                                      "@${_author.uniqueId} has hidden their liked videos."))
+                        ],
+                      ))))));
 
   /// Generates a column with a specific [AuthorStat].
   ///

@@ -28,7 +28,6 @@ dependencies:
     sdk: flutter
   flutter_spinkit: ^4.1.2
   flutter_inappwebview: ^4.0.0+4
-  flutter_sticky_header: "^0.4.2"
   http: ^0.12.1
   icon_shadow: ^1.0.1
   marquee: ^1.5.2
