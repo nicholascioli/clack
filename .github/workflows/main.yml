@@ -26,6 +26,7 @@ jobs:
     - run: flutter format --set-exit-if-changed .
     - run: flutter analyze .
     - run: flutter test
+    - run: flutter pub run flutter_launcher_icons:main # Generate the app icon
     - run: flutter build apk --target-platform android-arm,android-arm64,android-x64 --split-per-abi
     # Upload the 3 separate apks as artifacts
     - uses: actions/upload-artifact@v2
