@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:tuple/tuple.dart';
 
 import 'api/author_result.dart';
+import 'api/shared_types.dart';
 
 /// Convert a numerical stat into a friendly string.
 ///
@@ -35,6 +36,11 @@ String getAuthorShare(AuthorResult authorResult) =>
 /// Gets a string containing shareable info about a [video]
 String getVideoShare(VideoResult video) =>
     "Check out @${video.author.uniqueId}'s video! \n${video.desc}\n\nhttps://www.tiktok.com/@${video.author.uniqueId}/video/${video.id}";
+
+// TODO: This needs work, as TT converts the title using more complex rules
+/// Gets a string containing shareable info about a [music] track
+String getMusicShare(Music music) =>
+    "Check out videos with the song '${music.title}'!\n\nhttps://www.tiktok.com/music/${music.title.replaceAll(' ', '-').replaceAll(new RegExp(r"[\(\),?!.]"), '')}-${music.id}";
 
 /// Shows a dialog with the text 'NOT IMPLEMENTED'
 void showNotImplemented(BuildContext context) => showDialog(

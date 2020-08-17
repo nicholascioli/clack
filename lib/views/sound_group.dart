@@ -2,10 +2,12 @@ import 'package:audioplayer/audioplayer.dart';
 import 'package:clack/api.dart';
 import 'package:clack/api/music_result.dart';
 import 'package:clack/api/video_result.dart';
+import 'package:clack/utility.dart';
 import 'package:clack/views/video_feed.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:icon_shadow/icon_shadow.dart';
+import 'package:share/share.dart';
 
 class SoundGroupArguments {
   final ApiStream<MusicResult> stream;
@@ -68,10 +70,14 @@ class _SoundGroupState extends State<SoundGroup> {
     return Scaffold(
         appBar: AppBar(
             actions: [
-              IconButton(icon: Icon(Icons.share), onPressed: () => null)
+              IconButton(
+                  icon: Icon(Icons.share),
+                  onPressed: () => _videos[0] == null
+                      ? {}
+                      : Share.share(getMusicShare(_videos[0].music)))
             ],
             title: Text(_videos[0] == null
-                ? "..."
+                ? ""
                 : "${_videos[0].music.title} by ${_videos[0].music.authorName}")),
         body: _videos[0] == null
             ? Center(
@@ -153,7 +159,7 @@ class _SoundGroupState extends State<SoundGroup> {
                                   Icon(Icons.bookmark_border),
                                   Text("Add to Favorites")
                                 ]),
-                            onPressed: () {})
+                            onPressed: () => showNotImplemented(context))
                       ],
                     ),
                   ))
