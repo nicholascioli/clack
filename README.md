@@ -2,6 +2,14 @@
 
 Ticktok wrapper
 
+This is a tinfoil-style wrapper around TikTok that better respects your
+privacy.
+
+**DISCLAIMER: This only protects you from any spyware that may have been in
+the original TikTok app. Any and all activity that you do on TikTok's
+servers (such as watching/liking videos, commenting, and/or messaging other
+users) are still subject to data harvesting and privacy violations.**
+
 ## Getting Started
 
 This project is a starting point for a Flutter application.
@@ -38,7 +46,10 @@ Coming soon.
 	* Signature
 	* User's videos
 	* User's liked videos (if public)
+* View notifications (placeholder)
+* View profile (placeholder)
 * Share a user
 * Share a video
+* Share a videos by music track
 
 More to (hopefully) come!
