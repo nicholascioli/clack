@@ -5,6 +5,7 @@ import 'package:clack/api/shared_types.dart';
 import 'package:clack/utility.dart';
 import 'package:clack/api/video_result.dart';
 import 'package:clack/views/video_feed.dart';
+import 'package:extended_tabs/extended_tabs.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
@@ -217,17 +218,20 @@ class _UserInfoState extends State<UserInfo>
                             ]))
                       ],
                     )),
-                // TODO: Allow for this to also be sscrolled together with
-                //   its parent. Right now, it scrolls separately :(
                 sliver: SliverFillRemaining(
-                    child: TabBarView(controller: _tabController, children: [
-                  _buildVideoList(_authorVideos),
-                  _author.openFavorite
-                      ? _buildVideoList(_authorFavoritedVideos)
-                      : Center(
-                          child: Text(
-                              "@${_author.uniqueId} has hidden their liked videos."))
-                ])))
+                    // Here we use an [ExtendedTabBarView] so that the nested tab view
+                    // can scroll its parent [VideoFeed]
+                    child: ExtendedTabBarView(
+                        controller: _tabController,
+                        linkWithAncestor: true,
+                        children: [
+                      _buildVideoList(_authorVideos),
+                      _author.openFavorite
+                          ? _buildVideoList(_authorFavoritedVideos)
+                          : Center(
+                              child: Text(
+                                  "@${_author.uniqueId} has hidden their liked videos."))
+                    ])))
           ],
         ),
       ));

@@ -7,6 +7,7 @@ import 'package:clack/views/notifications_view.dart';
 import 'package:clack/views/search.dart';
 import 'package:clack/views/user_info.dart';
 import 'package:clack/views/video_page.dart';
+import 'package:extended_tabs/extended_tabs.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 
@@ -130,7 +131,9 @@ class _VideoFeedState extends State<VideoFeed> {
   /// Generates the TabView containing the variable left page and [UserInfo] right page
   Widget _buildVideos() => DefaultTabController(
         length: 2,
-        child: TabBarView(children: [
+        // Here we use an [ExtendedTabBarView] so that the nested tab view
+        // can scroll this parent
+        child: ExtendedTabBarView(children: [
           _buildVideoWithBar(),
           UserInfo(() => _videos[_currentIndex].author)
         ]),
@@ -190,31 +193,34 @@ class _VideoFeedState extends State<VideoFeed> {
   /// Builds the bottom bar used for navigating the left tab
   Widget _buildBottomBar() {
     /// Builds a specific [icon] tab which sets the [active] page when clicked
-    final buildTab = (IconData icon, VideoFeedActivePage active) =>
-        IntrinsicWidth(
-            child: Column(mainAxisSize: MainAxisSize.min, children: [
-          IconButton(
-              iconSize: 30,
-              padding: EdgeInsets.all(2),
-              icon: Icon(icon, color: Colors.white),
-              onPressed: () {
-                // Allow for switching between the states
-                print("PUSHED! Setting from $_activePage to $active");
-                if (_activePage != active) {
-                  setState(() => _activePage = active);
+    final buildTab =
+        (IconData icon, VideoFeedActivePage active) => IntrinsicWidth(
+                child: Column(mainAxisSize: MainAxisSize.min, children: [
+              IconButton(
+                  iconSize: 30,
+                  padding: EdgeInsets.all(2),
+                  icon: Icon(icon, color: Colors.white),
+                  onPressed: () {
+                    // Allow for switching between the states
+                    print("PUSHED! Setting from $_activePage to $active");
+                    if (_activePage != active) {
+                      setState(() {
+                        _activePage = active;
 
-                  // Disable tabbing if not on the main page
-                  this._onVideoPage = _activePage == VideoFeedActivePage.VIDEO;
-                }
-              }),
-          _activePage == active
-              ? Divider(
-                  color: Colors.white,
-                  height: 2,
-                  thickness: 2,
-                )
-              : Container(height: 2)
-        ]));
+                        // Disable tabbing if not on the main page
+                        this._onVideoPage =
+                            _activePage == VideoFeedActivePage.VIDEO;
+                      });
+                    }
+                  }),
+              _activePage == active
+                  ? Divider(
+                      color: Colors.white,
+                      height: 2,
+                      thickness: 2,
+                    )
+                  : Container(height: 2)
+            ]));
 
     return BottomAppBar(
         color: Colors.transparent,
