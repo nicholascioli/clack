@@ -29,8 +29,6 @@ class MusicResult {
     final music = json["musicInfos"];
     final author = json["authorInfos"];
 
-    print("VIDEO! $video");
-
     return MusicResult(
         id: music["musicId"],
         createTime: DateTime.fromMillisecondsSinceEpoch(
