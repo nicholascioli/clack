@@ -120,22 +120,21 @@ class _DiscoverState extends State<Discover> {
                                 padding: EdgeInsets.only(
                                     left: (innerIndex == 0) ? 10 : 3),
                                 child: GestureDetector(
-                                    onTap: () => Navigator.pushNamed(
-                                        context, VideoFeed.routeName,
-                                        arguments: VideoFeedArgs(
-                                            videos, innerIndex, null,
+                                    onTap: () => Navigator.pushNamed(context, VideoFeed.routeName,
+                                        arguments: VideoFeedArgs(videos, innerIndex, null,
                                             heroTag: ht.title)),
                                     child: Hero(
                                         tag:
                                             "${ht.title}_video_page_$innerIndex",
                                         child: Container(
                                             color: Colors.black,
-                                            child: videos[innerIndex] == null
-                                                ? Container(
-                                                    child:
-                                                        SizedBox(height: 100, width: 100),
-                                                    color: Colors.black)
-                                                : AspectRatio(aspectRatio: 0.75, child: FittedBox(fit: BoxFit.fitWidth, child: Image.network(videos[innerIndex].video.dynamicCover.toString())))))));
+                                            child: AspectRatio(
+                                                aspectRatio: 0.75,
+                                                child: videos[innerIndex] == null
+                                                    ? Container(
+                                                        child: SpinKitFadingCube(color: Colors.white),
+                                                        color: Colors.black)
+                                                    : FittedBox(fit: BoxFit.fitWidth, child: Image.network(videos[innerIndex].video.dynamicCover.toString())))))));
                           }))
                   : SpinKitCubeGrid(color: Colors.black),
               SizedBox(height: 10),
