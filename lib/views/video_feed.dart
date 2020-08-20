@@ -160,66 +160,71 @@ class _VideoFeedState extends State<VideoFeed> {
   }
 
   /// Builds just the [VideoPage] [ViewPager]
-  Widget _buildVideoPager() => Stack(children: [
-        PageView.builder(
-            controller:
-                PageController(keepPage: false, initialPage: _currentIndex),
-            scrollDirection: Axis.vertical,
-            itemCount: _length,
-            itemBuilder: (context, i) {
-              // Show loading symbol if we are awaiting API response
-              final VideoResult v = _videos[i];
-              if (v == null) {
-                return Center(
-                    child: SpinKitWave(color: Colors.white, size: 50.0));
-              } else {
-                return VideoPage(
-                    showUserPage: _showUserInfo,
-                    videoInfo: _videos[i],
-                    index: i,
-                    currentIndex: _currentIndex,
-                    heroTag: _heroTag);
-              }
-            },
-            onPageChanged: (page) {
-              print("MOVING: $page");
+  Widget _buildVideoPager() => RefreshIndicator(
+      onRefresh: () async => await _videos.refresh(),
+      child: PageView.builder(
+        controller: PageController(keepPage: false, initialPage: _currentIndex),
+        scrollDirection: Axis.vertical,
+        itemCount: _length,
+        itemBuilder: (context, i) {
+          // Show loading symbol if we are awaiting API response
+          final VideoResult v = _videos[i];
+          if (v == null) {
+            return Center(child: SpinKitWave(color: Colors.white, size: 50.0));
+          } else {
+            return VideoPage(
+                showUserPage: _showUserInfo,
+                videoInfo: _videos[i],
+                index: i,
+                currentIndex: _currentIndex,
+                heroTag: _heroTag);
+          }
+        },
+        onPageChanged: (page) {
+          print("MOVING: $page");
 
-              // FIXME: This is slightly nasty. Is there no other way?
-              setState(() => _currentIndex = page);
-            }),
-      ]);
+          // FIXME: This is slightly nasty. Is there no other way?
+          setState(() => _currentIndex = page);
+        },
+      ));
 
   /// Builds the bottom bar used for navigating the left tab
   Widget _buildBottomBar() {
     /// Builds a specific [icon] tab which sets the [active] page when clicked
-    final buildTab =
-        (IconData icon, VideoFeedActivePage active) => IntrinsicWidth(
-                child: Column(mainAxisSize: MainAxisSize.min, children: [
-              IconButton(
-                  iconSize: 30,
-                  padding: EdgeInsets.all(2),
-                  icon: Icon(icon, color: Colors.white),
-                  onPressed: () {
-                    // Allow for switching between the states
-                    print("PUSHED! Setting from $_activePage to $active");
-                    if (_activePage != active) {
-                      setState(() {
-                        _activePage = active;
+    final buildTab = (IconData icon, VideoFeedActivePage active,
+            {void Function() afterClick}) =>
+        IntrinsicWidth(
+            child: Column(mainAxisSize: MainAxisSize.min, children: [
+          IconButton(
+              iconSize: 30,
+              padding: EdgeInsets.all(2),
+              icon: Icon(icon, color: Colors.white),
+              onPressed: () {
+                // Allow for switching between the states
+                print("PUSHED! Setting from $_activePage to $active");
 
-                        // Disable tabbing if not on the main page
-                        this._onVideoPage =
-                            _activePage == VideoFeedActivePage.VIDEO;
-                      });
-                    }
-                  }),
-              _activePage == active
-                  ? Divider(
-                      color: Colors.white,
-                      height: 2,
-                      thickness: 2,
-                    )
-                  : Container(height: 2)
-            ]));
+                // Change only when different
+                if (_activePage != active) {
+                  setState(() {
+                    _activePage = active;
+
+                    // Disable tabbing if not on the main page
+                    this._onVideoPage =
+                        _activePage == VideoFeedActivePage.VIDEO;
+                  });
+                }
+
+                // If we have an action to do post-change, do so now
+                if (afterClick != null) afterClick();
+              }),
+          _activePage == active
+              ? Divider(
+                  color: Colors.white,
+                  height: 2,
+                  thickness: 2,
+                )
+              : Container(height: 2)
+        ]));
 
     return BottomAppBar(
         color: Colors.transparent,
@@ -227,7 +232,9 @@ class _VideoFeedState extends State<VideoFeed> {
         child: ButtonBar(
           alignment: MainAxisAlignment.spaceEvenly,
           children: [
-            buildTab(Icons.home, VideoFeedActivePage.VIDEO),
+            buildTab(Icons.home, VideoFeedActivePage.VIDEO,
+                afterClick: () =>
+                    _videos.refresh().then((value) => setState(() {}))),
             buildTab(Icons.search, VideoFeedActivePage.SEARCH),
             IconButton(
                 iconSize: 45,
