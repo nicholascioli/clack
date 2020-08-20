@@ -38,7 +38,9 @@ class Author {
   /// Whether an [Author] is verified.
   final bool verified;
 
-  /// ???
+  /// The relation of this [Author] to the currently active user
+  ///
+  /// Note: 1 means following, 0 means nothing
   final int relation;
 
   Author(
