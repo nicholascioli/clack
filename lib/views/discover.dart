@@ -47,7 +47,11 @@ class _DiscoverState extends State<Discover> {
           appBar: AppBar(
             leading: IconButton(
                 icon: Icon(Icons.arrow_back), onPressed: () => _handleBack()),
-            actions: [IconButton(icon: Icon(Icons.search), onPressed: () {})],
+            actions: [
+              IconButton(
+                  icon: Icon(Icons.search),
+                  onPressed: () => showNotImplemented(context))
+            ],
             title: Text("Discover"),
           ),
           body: _hashtags[0] == null
