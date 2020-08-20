@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:clack/api.dart';
 import 'package:clack/api/author_result.dart';
 import 'package:clack/views/full_image.dart';
@@ -10,6 +12,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
+import 'package:flutter_phoenix/flutter_phoenix.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:icon_shadow/icon_shadow.dart';
 import 'package:share/share.dart';
@@ -22,8 +25,15 @@ import 'package:share/share.dart';
 /// thumbnails opens up a new [VideoFeed] showing only their videos.
 class UserInfo extends StatefulWidget {
   static const routeName = "/user_info";
+
   final Author Function() authorGetter;
-  const UserInfo(this.authorGetter);
+  final bool isCurrentUser;
+
+  const UserInfo(this.authorGetter, {this.isCurrentUser = false});
+
+  /// Create a UserInfo for the currently logged-in user.
+  static UserInfo currentUser() =>
+      UserInfo(() => API.getLogin().user, isCurrentUser: true);
 
   @override
   _UserInfoState createState() => _UserInfoState();
@@ -82,155 +92,206 @@ class _UserInfoState extends State<UserInfo>
   }
 
   @override
-  Widget build(BuildContext context) => WillPopScope(
-      onWillPop: () => _handleBack(context),
-      child: Scaffold(
-          appBar: AppBar(
-            title: Text(_author.nickname),
-            centerTitle: true,
-            leading: IconButton(
-              icon: Icon(Icons.arrow_back),
-              onPressed: () => _handleBack(context),
+  Widget build(BuildContext context) {
+    // Change the AppBar's actions when viewing the current user
+    List<Widget> actions;
+    if (widget.isCurrentUser) {
+      actions = [
+        IconButton(
+            icon: Icon(Icons.exit_to_app), onPressed: () => _showLogOutDialog())
+      ];
+    } else {
+      actions = [
+        IconButton(
+            icon: Icon(Icons.share),
+            onPressed: () => _authorResult.then((authorResult) {
+                  Share.share(getAuthorShare(authorResult),
+                      subject:
+                          "Check out @${authorResult.user.uniqueId} TikTok!");
+                }))
+      ];
+    }
+
+    // Build the view
+    return WillPopScope(
+        onWillPop: () => _handleBack(context),
+        child: Scaffold(
+            appBar: AppBar(
+              title: Text(_author.nickname),
+              centerTitle: true,
+              leading: IconButton(
+                icon: Icon(Icons.arrow_back),
+                onPressed: () => _handleBack(context),
+              ),
+              actions: actions,
             ),
-            actions: [
-              IconButton(
-                  icon: Icon(Icons.share),
-                  onPressed: () => _authorResult.then((authorResult) {
-                        Share.share(getAuthorShare(authorResult),
-                            subject:
-                                "Check out @${authorResult.user.uniqueId} TikTok!");
-                      }))
-            ],
-          ),
-          body: DefaultTabController(
-              length: 2,
-              // Here we wrap in a NestedScrollView so that the nested Grid
-              //   view containing the videos can be scrolled together with the
-              //   general user info.
-              child: NestedScrollView(
-                  headerSliverBuilder: (context, innerBoxIsScrolled) => [
-                        SliverList(
-                            delegate: SliverChildListDelegate.fixed([
-                          SizedBox(height: 20),
-                          // Profile Picture
-                          Row(children: [
-                            Spacer(),
-                            Expanded(
-                                child: GestureDetector(
-                                    onTap: () => Navigator.pushNamed(
-                                        context, FullImage.routeName,
-                                        arguments: FullImageArgs(
-                                            _author.avatarLarger.toString())),
-                                    // Here we use a [Hero] so that the thumbnail can
-                                    // animate to and back from the [FullImage] when tapped
-                                    child: Hero(
-                                        tag: "full_image",
-                                        child: AspectRatio(
-                                            aspectRatio: 1,
-                                            child: CircleAvatar(
-                                              backgroundImage: NetworkImage(
-                                                  _author.avatarMedium
-                                                      .toString()),
-                                            ))))),
-                            Spacer()
-                          ]),
-                          SizedBox(height: 10),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Text("@${_author.uniqueId}", style: userTextStyle)
-                            ],
-                          ),
-                          SizedBox(height: 15),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                            children: [
-                              _buildStatsColumn(
-                                  (v) => v.stats.followingCount, "Following"),
-                              _buildStatsColumn(
-                                  (v) => v.stats.followerCount, "Followers"),
-                              _buildStatsColumn((v) => v.stats.heart, "Hearts")
-                            ],
-                          ),
-                          SizedBox(height: 10),
-                          // TODO: Make this change between 'Follow' and 'Message' / 'IconButton(?)
-                          //   based on whether the logged in user is following or not.
-                          ButtonBar(
-                            alignment: MainAxisAlignment.center,
-                            children: [
-                              OutlineButton(
-                                onPressed: () {},
-                                child: Text("Message"),
-                                textColor: Colors.black,
-                              ),
-                              OutlineButton.icon(
-                                onPressed: null,
-                                icon: Icon(Icons.person_add),
-                                label: Container(),
-                                textColor: Colors.black,
-                              )
-                            ],
-                          ),
-                          Padding(
-                              padding: EdgeInsetsDirectional.only(
-                                  start: 30, end: 30, top: 15),
-                              child: Text(
-                                _author.signature,
-                                style: softTextStyle,
-                                textAlign: TextAlign.center,
-                              )),
-                          SizedBox(height: 30),
-                        ])),
-                        // We need a SliverOverlapAbsorber here so that overlap
-                        //    events in the nested child effect the parent
-                        //  e.g. Everything scolls together
-                        SliverOverlapAbsorber(
-                            handle:
-                                NestedScrollView.sliverOverlapAbsorberHandleFor(
-                                    context),
-                            sliver: SliverAppBar(
-                                excludeHeaderSemantics: true,
-                                backgroundColor: Colors.white,
-                                forceElevated: innerBoxIsScrolled,
-                                pinned: true,
-                                title: TabBar(
-                                  indicator: BoxDecoration(),
-                                  labelColor: Colors.black,
-                                  unselectedLabelColor: Colors.grey,
-                                  tabs: [
-                                    Tab(icon: Icon(Icons.list)),
-                                    Tab(
-                                        icon: Stack(
-                                            alignment: Alignment.bottomRight,
-                                            children: [
-                                          Icon(Icons.favorite_border),
-                                          Padding(
-                                              padding:
-                                                  EdgeInsets.only(bottom: 3),
-                                              child: !_author.openFavorite
-                                                  ? Icon(
-                                                      Icons.lock,
-                                                      size: 12,
-                                                    )
-                                                  : null)
-                                        ]))
-                                  ],
-                                )))
-                      ],
-                  // TODO: Figure out reliable padding for pinned SliverAppBar above
-                  body: Padding(
-                      padding: EdgeInsets.only(top: 40),
-                      child: ExtendedTabBarView(
-                        linkWithAncestor: true,
-                        children: [
-                          _buildVideoList(_authorVideos),
-                          _author.openFavorite
-                              ? _buildVideoList(_authorFavoritedVideos)
-                              : Center(
-                                  child: Text(
-                                      "@${_author.uniqueId} has hidden their liked videos."))
+            body: DefaultTabController(
+                length: 2,
+                // Here we wrap in a NestedScrollView so that the nested Grid
+                //   view containing the videos can be scrolled together with the
+                //   general user info.
+                child: NestedScrollView(
+                    headerSliverBuilder: (context, innerBoxIsScrolled) => [
+                          SliverList(
+                              delegate: SliverChildListDelegate.fixed([
+                            SizedBox(height: 20),
+                            // Profile Picture
+                            Row(children: [
+                              Spacer(),
+                              Expanded(
+                                  child: GestureDetector(
+                                      onTap: () => Navigator.pushNamed(
+                                          context, FullImage.routeName,
+                                          arguments: FullImageArgs(
+                                              _author.avatarLarger.toString())),
+                                      // Here we use a [Hero] so that the thumbnail can
+                                      // animate to and back from the [FullImage] when tapped
+                                      child: Hero(
+                                          tag: "full_image",
+                                          child: AspectRatio(
+                                              aspectRatio: 1,
+                                              child: CircleAvatar(
+                                                backgroundImage: NetworkImage(
+                                                    _author.avatarMedium
+                                                        .toString()),
+                                              ))))),
+                              Spacer()
+                            ]),
+                            SizedBox(height: 10),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Text("@${_author.uniqueId}",
+                                    style: userTextStyle)
+                              ],
+                            ),
+                            SizedBox(height: 15),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                              children: [
+                                _buildStatsColumn(
+                                    (v) => v.stats.followingCount, "Following"),
+                                _buildStatsColumn(
+                                    (v) => v.stats.followerCount, "Followers"),
+                                _buildStatsColumn(
+                                    (v) => v.stats.heart, "Hearts")
+                              ],
+                            ),
+                            SizedBox(height: 10),
+                            FutureBuilder(
+                                future: _authorResult,
+                                builder: (context,
+                                    AsyncSnapshot<AuthorResult> snapshot) {
+                                  if (snapshot.connectionState ==
+                                          ConnectionState.done &&
+                                      snapshot.hasData) {
+                                    List<Widget> buttons;
+
+                                    // If we aren't following, offer to follow
+                                    if (snapshot.data.user.relation == 0) {
+                                      buttons = [
+                                        FlatButton(
+                                            onPressed: () =>
+                                                showNotImplemented(context),
+                                            color: Colors.pink,
+                                            child: Text("Follow"),
+                                            textColor: Colors.white)
+                                      ];
+                                    } else {
+                                      buttons = [
+                                        FlatButton(
+                                          onPressed: () =>
+                                              showNotImplemented(context),
+                                          color: Colors.pink,
+                                          child: Text("Message"),
+                                          textColor: Colors.white,
+                                        ),
+                                        OutlineButton(
+                                          onPressed: null,
+                                          child: Icon(Icons.playlist_add_check),
+                                          color: Colors.black,
+                                        )
+                                      ];
+                                    }
+
+                                    return ButtonBar(
+                                        alignment: MainAxisAlignment.center,
+                                        children: buttons);
+                                  } else {
+                                    return Container();
+                                  }
+                                }),
+                            Padding(
+                                padding: EdgeInsetsDirectional.only(
+                                    start: 30, end: 30, top: 15),
+                                child: Text(
+                                  _author.signature,
+                                  style: softTextStyle,
+                                  textAlign: TextAlign.center,
+                                )),
+                            SizedBox(height: 30),
+                          ])),
+                          // We need a SliverOverlapAbsorber here so that overlap
+                          //    events in the nested child effect the parent
+                          //  e.g. Everything scolls together
+                          SliverOverlapAbsorber(
+                              handle: NestedScrollView
+                                  .sliverOverlapAbsorberHandleFor(context),
+                              sliver: SliverAppBar(
+                                  excludeHeaderSemantics: true,
+                                  backgroundColor: Colors.white,
+                                  forceElevated: innerBoxIsScrolled,
+                                  pinned: true,
+                                  title: TabBar(
+                                    indicator: BoxDecoration(),
+                                    labelColor: Colors.black,
+                                    unselectedLabelColor: Colors.grey,
+                                    tabs: [
+                                      Tab(icon: Icon(Icons.list)),
+                                      Tab(
+                                          icon: Stack(
+                                              alignment: Alignment.bottomRight,
+                                              children: [
+                                            Icon(Icons.favorite_border),
+                                            Padding(
+                                                padding:
+                                                    EdgeInsets.only(bottom: 3),
+                                                child: !_author.openFavorite &&
+                                                        !widget.isCurrentUser
+                                                    ? Icon(
+                                                        Icons.lock,
+                                                        size: 12,
+                                                      )
+                                                    : null)
+                                          ]))
+                                    ],
+                                  )))
                         ],
-                      ))))));
+                    // TODO: Figure out reliable padding for pinned SliverAppBar above
+                    body: Padding(
+                        padding: EdgeInsets.only(top: 40),
+                        child: ExtendedTabBarView(
+                          linkWithAncestor: true,
+                          children: [
+                            _buildVideoList(
+                                _authorVideos,
+                                (stats) => stats.videoCount,
+                                (author) => author.stats.videoCount > 0,
+                                false,
+                                "Nothing to see here..."),
+                            _buildVideoList(
+                                _authorFavoritedVideos,
+                                (stats) => stats.diggCount,
+                                (_) =>
+                                    _author.openFavorite ||
+                                    widget.isCurrentUser,
+                                true,
+                                _author.openFavorite || widget.isCurrentUser
+                                    ? "Nothing to see here..."
+                                    : "@${_author.uniqueId} has hidden their liked videos.")
+                          ],
+                        ))))));
+  }
 
   /// Generates a column with a specific [AuthorStat].
   ///
@@ -258,73 +319,86 @@ class _UserInfoState extends State<UserInfo>
   /// Generates a [GridView] with the videos of a specific stream
   ///
   /// The [stream] is resued by passing it to the [VideoFeed] upon construction.
-  Widget _buildVideoList(ApiStream<VideoResult> stream) {
+  Widget _buildVideoList(
+      ApiStream<VideoResult> stream,
+      int Function(AuthorStats stats) count,
+      bool Function(AuthorResult res) condition,
+      bool showUserInfo,
+      String emptyMessage) {
+    final gridBuilder = (AuthorResult userInfo) => GridView.builder(
+          shrinkWrap: true,
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+              mainAxisSpacing: 3, crossAxisSpacing: 3, crossAxisCount: 3),
+          itemCount: max(count(userInfo.stats), 0),
+          itemBuilder: (context, index) {
+            return GestureDetector(
+                onTap: () => Navigator.pushNamed(context, VideoFeed.routeName,
+                    arguments: VideoFeedArgs(
+                        stream, index, max(count(userInfo.stats), 0),
+                        showUserInfo: showUserInfo, heroTag: "userInfo")),
+                child: Container(
+                    color: Colors.black,
+                    child: Hero(
+                        tag: "userInfo_video_page_$index",
+                        child: Stack(children: [
+                          AspectRatio(
+                              aspectRatio: 1,
+                              child: FittedBox(
+                                  fit: BoxFit.fitWidth,
+                                  child: stream[index] == null
+                                      ? Padding(
+                                          padding: EdgeInsets.all(40),
+                                          child: SpinKitFadingCube(
+                                              color: Colors.grey))
+                                      : Image.network(stream[index]
+                                          .video
+                                          .dynamicCover
+                                          .toString()))),
+                          Align(
+                              alignment: Alignment.bottomLeft,
+                              child: Padding(
+                                  padding: EdgeInsets.all(5),
+                                  child: stream[index] == null
+                                      ? Container()
+                                      : Row(children: [
+                                          IconShadowWidget(
+                                            Icon(
+                                              Icons.play_arrow,
+                                              color: Colors.white,
+                                            ),
+                                            shadowColor: Colors.black,
+                                          ),
+                                          Text(
+                                            statToString(
+                                                stream[index].stats.playCount),
+                                            style: playCountTextStyle,
+                                          )
+                                        ])))
+                        ]))));
+          },
+        );
+
     return FutureBuilder(
         future: _authorResult,
         builder: (context, AsyncSnapshot<AuthorResult> snapshot) {
-          return snapshot.connectionState == ConnectionState.done &&
-                  snapshot.hasData
-              ? GridView.builder(
-                  shrinkWrap: true,
-                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                      mainAxisSpacing: 3,
-                      crossAxisSpacing: 3,
-                      crossAxisCount: 3),
-                  itemCount: snapshot.data.stats.videoCount,
-                  itemBuilder: (context, index) {
-                    return GestureDetector(
-                        onTap: () => Navigator.pushNamed(
-                            context, VideoFeed.routeName,
-                            arguments: VideoFeedArgs(
-                                stream, index, snapshot.data.stats.videoCount,
-                                showUserInfo: false, heroTag: "userInfo")),
-                        child: Container(
-                            color: Colors.black,
-                            child: Hero(
-                                tag: "userInfo_video_page_$index",
-                                child: Stack(children: [
-                                  AspectRatio(
-                                      aspectRatio: 1,
-                                      child: FittedBox(
-                                          fit: BoxFit.fitWidth,
-                                          child: stream[index] == null
-                                              ? Padding(
-                                                  padding: EdgeInsets.all(40),
-                                                  child: SpinKitFadingCube(
-                                                      color: Colors.grey))
-                                              : Image.network(stream[index]
-                                                  .video
-                                                  .dynamicCover
-                                                  .toString()))),
-                                  Align(
-                                      alignment: Alignment.bottomLeft,
-                                      child: Padding(
-                                          padding: EdgeInsets.all(5),
-                                          child: stream[index] == null
-                                              ? Container()
-                                              : Row(children: [
-                                                  IconShadowWidget(
-                                                    Icon(
-                                                      Icons.play_arrow,
-                                                      color: Colors.white,
-                                                    ),
-                                                    shadowColor: Colors.black,
-                                                  ),
-                                                  Text(
-                                                    statToString(stream[index]
-                                                        .stats
-                                                        .playCount),
-                                                    style: playCountTextStyle,
-                                                  )
-                                                ])))
-                                ]))));
-                  },
-                )
-              : Center(
-                  child: SpinKitFadingGrid(
-                  color: Colors.black,
-                  size: 50,
-                ));
+          // Check if we have data to work with
+          if (snapshot.connectionState == ConnectionState.done &&
+              snapshot.hasData) {
+            // Check if we have videos to show
+            if (condition(snapshot.data)) {
+              return gridBuilder(snapshot.data);
+            } else {
+              // Otherwise, show empty text
+              return Center(child: Text(emptyMessage));
+            }
+          } else {
+            // Otherwise, show loading
+            return Center(
+                child: SpinKitFadingGrid(
+              color: Colors.black,
+              size: 50,
+            ));
+          }
         });
   }
 
@@ -333,5 +407,27 @@ class _UserInfoState extends State<UserInfo>
     DefaultTabController.of(ctx).index = 0;
 
     return Future.value(false);
+  }
+
+  Future<void> _showLogOutDialog() async {
+    return showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        title: Text("Log Out?"),
+        content: Text(
+            "Are you sure you want to log out? After logging out, the app will reload."),
+        actions: [
+          FlatButton(
+            child: Text("Cancel"),
+            onPressed: () => Navigator.of(context).pop(),
+          ),
+          FlatButton(
+              child: Text("Log Out"),
+              onPressed: () =>
+                  API.logout().then((value) => Phoenix.rebirth(context)))
+        ],
+      ),
+    );
   }
 }
