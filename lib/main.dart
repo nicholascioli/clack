@@ -1,10 +1,22 @@
+import 'package:clack/api.dart';
 import 'package:clack/views/full_image.dart';
+import 'package:clack/views/sign_in_webview.dart';
 import 'package:clack/views/sound_group.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_phoenix/flutter_phoenix.dart';
 
 import 'views/video_feed.dart';
 
-void main() => runApp(MyApp());
+void main() async {
+  // Needed to ensure API can be initialized before app starts
+  WidgetsFlutterBinding.ensureInitialized();
+
+  // Initialize the API
+  await API.init();
+
+  // Run the app
+  return runApp(Phoenix(child: MyApp()));
+}
 
 class MyApp extends StatelessWidget {
   @override
@@ -15,7 +27,8 @@ class MyApp extends StatelessWidget {
         routes: {
           VideoFeed.routeName: (ctx) => VideoFeed(),
           FullImage.routeName: (ctx) => FullImage(),
-          SoundGroup.routeName: (ctx) => SoundGroup()
+          SoundGroup.routeName: (ctx) => SoundGroup(),
+          SignInWebview.routeName: (ctx) => SignInWebview()
         });
   }
 }

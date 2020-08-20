@@ -1,26 +1,30 @@
-import 'package:clack/utility.dart';
+import 'package:clack/api.dart';
+import 'package:clack/views/sign_in_webview.dart';
+import 'package:clack/views/user_info.dart';
 import 'package:clack/views/video_feed.dart';
 import 'package:flutter/material.dart';
 
-class ProfileView extends StatelessWidget {
+class ProfileView extends StatefulWidget {
   final void Function(VideoFeedActivePage active) setActive;
   const ProfileView(this.setActive);
 
   @override
-  Widget build(BuildContext context) {
-    return WillPopScope(
-        onWillPop: () => _handleBack(),
-        child: Scaffold(
+  _ProfileViewState createState() => _ProfileViewState();
+}
+
+class _ProfileViewState extends State<ProfileView> {
+  @override
+  Widget build(BuildContext context) =>
+      API.isLoggedIn() ? UserInfo.currentUser() : _buildAnonymous();
+
+  Widget _buildAnonymous() => WillPopScope(
+      onWillPop: () => _handleBack(),
+      child: Scaffold(
           appBar: AppBar(
             leading: IconButton(
               icon: Icon(Icons.arrow_back),
               onPressed: () => _handleBack(),
             ),
-            actions: [
-              IconButton(
-                  icon: Icon(Icons.settings),
-                  onPressed: () => showNotImplemented(context))
-            ],
             title: Text("Profile"),
           ),
           body: Center(
@@ -35,16 +39,15 @@ class ProfileView extends StatelessWidget {
                     child: Text("Sign up"),
                     color: Colors.pink,
                     textColor: Colors.white,
-                    onPressed: () => showNotImplemented(context))
+                    onPressed: () =>
+                        Navigator.pushNamed(context, SignInWebview.routeName))
               ],
             ),
-          ),
-        ));
-  }
+          )));
 
   Future<bool> _handleBack() {
     // Go back to the videos on back
-    setActive(VideoFeedActivePage.VIDEO);
+    widget.setActive(VideoFeedActivePage.VIDEO);
 
     return Future.value(false);
   }
