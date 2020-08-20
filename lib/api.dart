@@ -166,24 +166,48 @@ class ApiStream<T> {
 /// to iterate over API results.
 class API {
   // Constants used throughout the API calls
-  static const String _USER_AGENT =
+  static const String USER_AGENT =
       "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.97 Safari/537.36";
-  static const String _TEMPLATE_URL =
-      "https://m.tiktok.com/api/item_list/?id=1&secUid=&minCursor=0&sourceType=12&appId=1233";
+  static InAppWebViewGroupOptions WEB_VIEW_OPTIONS = InAppWebViewGroupOptions(
+      crossPlatform:
+          InAppWebViewOptions(userAgent: USER_AGENT, incognito: true));
+
+  static Cookie _loginToken;
+  static Author _userInfo = Author(
+      id: "1", uniqueId: "__ANONYMOUS__"); // Initialize as anonymous user
 
   // We need a [HeadlessInAppWebView] in order to perform url signing because
   //   the signing process is done using obfuscated JS
   static final HeadlessInAppWebView _webView = HeadlessInAppWebView(
-      initialUrl: "",
-      initialHeaders: {},
-      initialOptions: InAppWebViewGroupOptions(
-          crossPlatform: InAppWebViewOptions(userAgent: _USER_AGENT)));
+      initialUrl: "", initialHeaders: {}, initialOptions: WEB_VIEW_OPTIONS);
+
+  /// Get an [author]'s extended info.
+  ///
+  /// This returns a [Future] as it requires network requests.
+  static Future<AuthorResult> getAuthorInfo(Author author) async {
+    String url =
+        _getFormattedUrl("api/user/detail", {"uniqueId": author.uniqueId});
+
+    dynamic asJson = await _fetchResults(url);
+    dynamic user = asJson["userInfo"];
+
+    return AuthorResult.fromJson(user);
+  }
 
   /// Get an [ApiStream]<[VideoResult]> of currently trending videos.
   static ApiStream<VideoResult> getTrendingStream(int count) =>
       ApiStream(count, (count, cursor) {
         // TODO: Make this allow for querying anything, not just the trending
-        String url = "$_TEMPLATE_URL&count=$count&maxCursor=$cursor&type=5";
+        String url = _getFormattedUrl("api/item_list", {
+          "id": _userInfo.id,
+          "secUid": "",
+          "sourceType": 12,
+          "type": TYPE_TRENDING_VIDEOS,
+          "count": count,
+          "maxCursor": cursor,
+          "minCursor": 0
+        });
+
         return _getVideos(url, count, cursor);
       });
 
@@ -191,8 +215,16 @@ class API {
   static ApiStream<VideoResult> getAuthorVideoStream(
           Author author, int count) =>
       ApiStream(count, (count, cursor) {
-        String url =
-            "https://m.tiktok.com/api/item_list/?count=$count&id=${author.id}&type=1&secUid=${author.secUid}&maxCursor=$cursor&minCursor=0&sourceType=8&appId=1233&language=en";
+        String url = _getFormattedUrl("api/item_list", {
+          "id": author.id,
+          "secUid": author.secUid,
+          "sourceType": 8,
+          "type": TYPE_RECENT_VIDEOS,
+          "count": count,
+          "maxCursor": cursor,
+          "minCursor": 0
+        });
+
         return _getVideos(url, count, cursor);
       });
 
@@ -203,8 +235,16 @@ class API {
   static ApiStream<VideoResult> getAuthorFavoritedVideoStream(
           Author author, int count) =>
       ApiStream(count, (count, cursor) {
-        String url =
-            'https://m.tiktok.com/api/item_list/?count=$count&id=${author.id}&type=$TYPE_LIKED_VIDEOS&secUid=${author.secUid}&maxCursor=$cursor&minCursor=0&sourceType=9&appId=1233';
+        String url = _getFormattedUrl("api/item_list", {
+          "id": author.id,
+          "secUid": author.secUid,
+          "sourceType": 9,
+          "type": TYPE_LIKED_VIDEOS,
+          "count": count,
+          "maxCursor": cursor,
+          "minCursor": 0
+        });
+
         return _getVideos(url, count, cursor);
       });
 
@@ -218,8 +258,15 @@ class API {
 
   static ApiStream<MusicResult> getVideosForMusic(Music m, int count) =>
       ApiStream(count, (count, maxCursor) {
-        String url =
-            'https://m.tiktok.com/share/item/list?secUid=&id=${m.id}&type=$TYPE_AUDIO_VIDEOS&count=$count&minCursor=0&maxCursor=$maxCursor&shareUid=';
+        String url = _getFormattedUrl("share/item/list", {
+          "id": m.id,
+          "secUid": "",
+          "shareId": "",
+          "type": TYPE_AUDIO_VIDEOS,
+          "count": count,
+          "maxCursor": maxCursor,
+          "minCursor": 0
+        });
 
         return _getVideosForMusic(url, count, maxCursor);
       });
@@ -230,8 +277,16 @@ class API {
   static ApiStream<VideoResult> getVideosForHashtag(
           HashtagResult ht, int count) =>
       ApiStream(count, (count, maxCursor) {
-        final String url =
-            "https://m.tiktok.com/share/item/list?secUid=&id=${ht.id}&type=$TYPE_TAG_VIDEOS&count=$count&minCursor=0&maxCursor=$maxCursor&shareUid=";
+        final String url = _getFormattedUrl("share/item/list", {
+          "id": ht.id,
+          "secUid": "",
+          "shareId": "",
+          "type": TYPE_TAG_VIDEOS,
+          "count": count,
+          "maxCursor": maxCursor,
+          "minCursor": 0
+        });
+
         return _getVideosForMusic(url, count, maxCursor);
       }).transform((MusicResult r) => VideoResult(
           id: r.id,
@@ -241,167 +296,6 @@ class API {
           music: r.musicInfo,
           video: r.video,
           stats: r.stats));
-
-  static Future<ApiResult<HashtagResult>> _getTrendingHashtag(
-      int count, int cursor) async {
-    String url =
-        "https://m.tiktok.com/api/discover/challenge/?discoverType=0&needItemList=false&keyWord=&offset=$cursor&count=$count&language=en&appId=1233";
-
-    // Sign the url using TT JS
-    // Note: We construct a headless webview first and then dispose of
-    //   it after we finish generating the code
-    await _webView.run();
-    String code = await sign(url);
-    String signedUrl = "$url&_signature=$code";
-    await _webView.dispose();
-    print("GOT URL: $signedUrl");
-
-    // Make a request for the user
-    var response =
-        await http.get(signedUrl, headers: {"User-Agent": _USER_AGENT});
-
-    if (response.statusCode == 200) {
-      // If the server did return a 200 OK response,
-      // then parse the JSON.
-      dynamic asJson = json.decode(response.body);
-      List<dynamic> hashtags = asJson["challengeInfoList"];
-
-      int offset = int.tryParse(asJson["offset"]);
-
-      // TODO: How do we know that there isn't more?
-      return ApiResult(offset != 0 && offset != cursor, offset,
-          hashtags.map((h) => HashtagResult.fromJson(h)));
-    } else {
-      // If the server did not return a 200 OK response,
-      // then throw an exception.
-      throw Exception('Failed to fetch hashtags');
-    }
-  }
-
-  /// Get an [author]'s extended info.
-  ///
-  /// This returns a [Future] as it requires network requests.
-  static Future<AuthorResult> getAuthorInfo(Author author) async {
-    String url =
-        "https://m.tiktok.com/api/user/detail/?uniqueId=${author.uniqueId}&language=en";
-
-    // Sign the url using TT JS
-    // Note: We construct a headless webview first and then dispose of
-    //   it after we finish generating the code
-    await _webView.run();
-    String code = await sign(url);
-    String signedUrl = "$url&_signature=$code";
-    await _webView.dispose();
-    print("GOT URL: $signedUrl");
-
-    // Make a request for the user
-    var response =
-        await http.get(signedUrl, headers: {"User-Agent": _USER_AGENT});
-
-    if (response.statusCode == 200) {
-      // If the server did return a 200 OK response,
-      // then parse the JSON.
-      dynamic asJson = json.decode(response.body);
-      dynamic user = asJson["userInfo"];
-
-      return AuthorResult.fromJson(user);
-    } else {
-      // If the server did not return a 200 OK response,
-      // then throw an exception.
-      throw Exception('Failed to fetch user');
-    }
-  }
-
-  /// Gets an [ApiResult] containing a set of videos of max size [count] from
-  /// the [url] endpoint.
-  ///
-  /// A [cursor] value of `0` fetches from the start of the results.
-  ///
-  /// Any non-zero [cursor] specifies where to start the search from and is
-  /// part of the [ApiResult]. The [cursor] does not seem to have any obvious
-  /// pattern and, as such, should only be supplied from a previous [ApiRequest].
-  static Future<ApiResult<VideoResult>> _getVideos(
-      String url, int count, int cursor) async {
-    // Sign the url using TT JS
-    // Note: We construct a headless webview first and then dispose of
-    //   it after we finish generating the code
-    await _webView.run();
-    String code = await sign(url);
-    String signedUrl = "$url&_signature=$code";
-    await _webView.dispose();
-    print("GOT URL: $signedUrl");
-
-    // Make a request for the videos
-    var response =
-        await http.get(signedUrl, headers: {"User-Agent": _USER_AGENT});
-
-    if (response.statusCode == 200) {
-      // If the server did return a 200 OK response,
-      // then parse the JSON.
-      // print("GOT RESPONSE: ${response.body}");
-      dynamic asJson = json.decode(response.body);
-      List<dynamic> array = asJson["items"];
-
-      // Short out if we get no results
-      if (array == null) return ApiResult(false, cursor, []);
-
-      bool hasMore = asJson["hasMore"];
-      int maxCursor = int.tryParse(asJson["maxCursor"]);
-      return ApiResult(
-          hasMore, maxCursor, array.map((e) => VideoResult.fromJson(e)));
-    } else {
-      // If the server did not return a 200 OK response,
-      // then throw an exception.
-      throw Exception('Failed to fetch videos from $url: ${response.body}');
-    }
-  }
-
-  static Future<ApiResult<MusicResult>> _getVideosForMusic(
-      String url, int count, int cursor) async {
-    // Sign the url using TT JS
-    // Note: We construct a headless webview first and then dispose of
-    //   it after we finish generating the code
-    await _webView.run();
-    String code = await sign(url);
-    String signedUrl = "$url&_signature=$code";
-    await _webView.dispose();
-    print("GOT URL: $signedUrl");
-
-    // Make a request for the videos
-    var response =
-        await http.get(signedUrl, headers: {"User-Agent": _USER_AGENT});
-
-    if (response.statusCode == 200) {
-      // If the server did return a 200 OK response,
-      // then parse the JSON.
-      // print("GOT RESPONSE: ${response.body}");
-      dynamic asJson = json.decode(response.body)["body"];
-      List<dynamic> array =
-          asJson["itemListData"]; // different from stock _getVideos
-
-      // Short out if we get no results
-      if (array == null) return ApiResult(false, cursor, []);
-
-      bool hasMore = asJson["hasMore"];
-      int maxCursor = int.tryParse(asJson["maxCursor"]);
-
-      return ApiResult(
-          hasMore, maxCursor, array.map((e) => MusicResult.fromJson(e)));
-    } else {
-      // If the server did not return a 200 OK response,
-      // then throw an exception.
-      throw Exception('Failed to fetch videos from $url: ${response.body}');
-    }
-  }
-
-  /// NOT IMPLEMENTED
-  ///
-  /// Fetches a batch of commments from [url]. See [_getVideos()] for more
-  /// info.
-  // static Future<ApiResult<dynamic>> _getComments(
-  //     String url, int count, int cursor) async {
-  //   throw Exception("Not Implemented");
-  // }
 
   /// Signs a URL using TT's obfuscated JS
   ///
@@ -416,5 +310,124 @@ class API {
       return await _webView.webViewController.evaluateJavascript(
           source: "$js; byted_acrawler.sign({ url: \"$url\" })");
     });
+  }
+
+  /// Gets an [ApiResult] containing a set of hashtags that are currently trending
+  static Future<ApiResult<HashtagResult>> _getTrendingHashtag(
+      int count, int cursor) async {
+    String url = _getFormattedUrl("api/discover/challenge", {
+      "discoverType": 0,
+      "needItemList": false,
+      "keyWord": "",
+      "offset": cursor,
+      "count": count,
+      "language": "en"
+    });
+    // "https://m.tiktok.com/api/discover/challenge/?discoverType=0&needItemList=false&keyWord=&offset=$cursor&count=$count&language=en&appId=1233";
+
+    dynamic asJson = await _fetchResults(url);
+    List<dynamic> hashtags = asJson["challengeInfoList"];
+
+    int offset = int.tryParse(asJson["offset"]);
+
+    // TODO: How do we know that there isn't more?
+    return ApiResult(offset != 0 && offset != cursor, offset,
+        hashtags.map((h) => HashtagResult.fromJson(h)));
+  }
+
+  /// Gets an [ApiResult] containing a set of videos of max size [count] from
+  /// the [url] endpoint.
+  ///
+  /// A [cursor] value of `0` fetches from the start of the results.
+  ///
+  /// Any non-zero [cursor] specifies where to start the search from and is
+  /// part of the [ApiResult]. The [cursor] does not seem to have any obvious
+  /// pattern and, as such, should only be supplied from a previous [ApiRequest].
+  static Future<ApiResult<VideoResult>> _getVideos(
+      String url, int count, int cursor) async {
+    dynamic asJson = await _fetchResults(url);
+    List<dynamic> array = asJson["items"];
+
+    // Short out if we get no results
+    if (array == null) return ApiResult(false, cursor, []);
+
+    bool hasMore = asJson["hasMore"];
+    int maxCursor = int.tryParse(asJson["maxCursor"]);
+    return ApiResult(
+        hasMore, maxCursor, array.map((e) => VideoResult.fromJson(e)));
+  }
+
+  /// Gets an [ApiResult] containing a list of videos that use a given [Music] track
+  static Future<ApiResult<MusicResult>> _getVideosForMusic(
+      String url, int count, int cursor) async {
+    dynamic asJson = (await _fetchResults(url))["body"];
+    List<dynamic> array =
+        asJson["itemListData"]; // different from stock _getVideos
+
+    // Short out if we get no results
+    if (array == null) return ApiResult(false, cursor, []);
+
+    bool hasMore = asJson["hasMore"];
+    int maxCursor = int.tryParse(asJson["maxCursor"]);
+
+    return ApiResult(
+        hasMore, maxCursor, array.map((e) => MusicResult.fromJson(e)));
+  }
+
+  /// NOT IMPLEMENTED
+  ///
+  /// Fetches a batch of commments from [url]. See [_getVideos()] for more
+  /// info.
+  // static Future<ApiResult<dynamic>> _getComments(
+  //     String url, int count, int cursor) async {
+  //   throw Exception("Not Implemented");
+  // }
+
+  /// Fetches data from a TT endpoint
+  static Future<dynamic> _fetchResults(String url) async {
+    // Sign the url using TT JS
+    // Note: We construct a headless webview first and then dispose of
+    //   it after we finish generating the code
+    await _webView.run();
+    String code = await sign(url);
+    String signedUrl = "$url&_signature=$code";
+    await _webView.dispose();
+    print("GOT URL: $signedUrl");
+
+    // Make a request for the videos
+    //   Note: We attach the login cookie if available
+    var response = await http.get(signedUrl, headers: {
+      "User-Agent": USER_AGENT,
+      "Cookie": _loginToken != null ? "sid_guard: ${_loginToken.value}" : ""
+    });
+
+    // Make sure that we get a valid response
+    if (response.statusCode == 200) {
+      // If the server did return a 200 OK response,
+      //   then parse the JSON.
+      // print("GOT RESPONSE: ${response.body}");
+      return Future.value(json.decode(response.body));
+    } else {
+      // If the server did not return a 200 OK response,
+      //   then throw an exception.
+      throw Exception(
+          'Failed to fetch results from $url: ${response.statusCode} => ${response.body}');
+    }
+  }
+
+  /// Get a url with formatted [options]
+  ///
+  /// The endpoint is always assumed to start with https://m.tiktok.com/
+  static String _getFormattedUrl(
+      String endpoint, Map<String, dynamic> options) {
+    String result = "https://m.tiktok.com/$endpoint/";
+
+    // Apply all of the options
+    result += options.entries.fold(
+        "?appId=1233",
+        (previousValue, element) =>
+            "$previousValue&${element.key}=${element.value.toString()}");
+
+    return result;
   }
 }
