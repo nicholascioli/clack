@@ -186,23 +186,22 @@ class API {
   // Constants used throughout the API calls
   static const String USER_AGENT =
       "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.97 Safari/537.36";
-  static InAppWebViewGroupOptions WEB_VIEW_OPTIONS = InAppWebViewGroupOptions(
+  static InAppWebViewGroupOptions webViewOptions = InAppWebViewGroupOptions(
       crossPlatform:
           InAppWebViewOptions(userAgent: USER_AGENT, incognito: true));
 
-  static AuthorResult _USER_DEFAULTS =
+  static AuthorResult _userDefaults =
       AuthorResult(user: Author(id: "1", uniqueId: "__ANONYMOUS__"));
 
   static Cookie _loginToken;
   static String _webId;
   static String _lang = "en";
-  static AuthorResult _userInfo =
-      _USER_DEFAULTS; // Initialize as anonymous user
+  static AuthorResult _userInfo = _userDefaults; // Initialize as anonymous user
 
   // We need a [HeadlessInAppWebView] in order to perform url signing because
   //   the signing process is done using obfuscated JS
   static final HeadlessInAppWebView _webView = HeadlessInAppWebView(
-      initialUrl: "", initialHeaders: {}, initialOptions: WEB_VIEW_OPTIONS);
+      initialUrl: "", initialHeaders: {}, initialOptions: webViewOptions);
 
   static Future<void> init() async {
     const FlutterSecureStorage storage = FlutterSecureStorage();
@@ -235,7 +234,7 @@ class API {
     // Update locals
     _loginToken = null;
     _webId = null;
-    _userInfo = _USER_DEFAULTS;
+    _userInfo = _userDefaults;
     _lang = "en";
 
     return Future.value();

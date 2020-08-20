@@ -16,7 +16,7 @@ class SignInWebview extends StatelessWidget {
       ),
       body: InAppWebView(
         initialUrl: "https://m.tiktok.com/login",
-        initialOptions: API.WEB_VIEW_OPTIONS,
+        initialOptions: API.webViewOptions,
 
         // Here, we look for the cookie 'sid_guard'. Once found, we kill the
         //   webview since we have successfully logged in.
