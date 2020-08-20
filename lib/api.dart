@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 import 'dart:math';
 
 import 'package:clack/api/author_result.dart';
@@ -8,6 +9,7 @@ import 'package:clack/api/music_result.dart';
 import 'package:clack/api/video_result.dart';
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
 
 import 'api/shared_types.dart';
@@ -98,6 +100,22 @@ class ApiStream<T> {
   /// the end. See [setOnChanged()] for more info.
   int get length => _results.length;
 
+  /// Clear the current cache of this stream and force a reload
+  Future<void> refresh() {
+    // Clear the current results
+    _results.clear();
+
+    // Reset the state
+    _maxCursor = 0;
+    isFetching = false;
+    hasMore = true;
+
+    // Alert listeners about the changes
+    this._cb();
+
+    return Future.value();
+  }
+
   /// Attach a callback when the list updates.
   ///
   /// Since this is a networked-backed list, use this method to know when
@@ -172,14 +190,78 @@ class API {
       crossPlatform:
           InAppWebViewOptions(userAgent: USER_AGENT, incognito: true));
 
+  static AuthorResult _USER_DEFAULTS =
+      AuthorResult(user: Author(id: "1", uniqueId: "__ANONYMOUS__"));
+
   static Cookie _loginToken;
-  static Author _userInfo = Author(
-      id: "1", uniqueId: "__ANONYMOUS__"); // Initialize as anonymous user
+  static String _webId;
+  static String _lang = "en";
+  static AuthorResult _userInfo =
+      _USER_DEFAULTS; // Initialize as anonymous user
 
   // We need a [HeadlessInAppWebView] in order to perform url signing because
   //   the signing process is done using obfuscated JS
   static final HeadlessInAppWebView _webView = HeadlessInAppWebView(
       initialUrl: "", initialHeaders: {}, initialOptions: WEB_VIEW_OPTIONS);
+
+  static Future<void> init() async {
+    const FlutterSecureStorage storage = FlutterSecureStorage();
+
+    String token = await storage.read(key: "TT_TOKEN");
+    String webId = await storage.read(key: "TT_WEBID");
+    String username = await storage.read(key: "TT_USER");
+    String lang = await storage.read(key: "TT_LANG");
+
+    // Only initialize if not null
+    if (token != null && username != null && webId != null && lang != null) {
+      _loginToken = Cookie(name: "sid_guard", value: token);
+      _webId = webId;
+      _userInfo = await API.getAuthorInfo(Author(uniqueId: username));
+      _lang = lang;
+    }
+
+    return Future.value();
+  }
+
+  /// Check if the user has logged in
+  static bool isLoggedIn() => _loginToken != null;
+
+  /// Trash all login data
+  static Future<void> logout() async {
+    // Clear secure storage
+    const FlutterSecureStorage storage = FlutterSecureStorage();
+    await storage.deleteAll();
+
+    // Update locals
+    _loginToken = null;
+    _webId = null;
+    _userInfo = _USER_DEFAULTS;
+    _lang = "en";
+
+    return Future.value();
+  }
+
+  /// Save login information for all future requests
+  static Future<void> login(
+      Cookie token, String webId, String username, String lang) async {
+    // Save to secure storage
+    const FlutterSecureStorage storage = FlutterSecureStorage();
+    storage.write(key: "TT_TOKEN", value: token.value.toString());
+    storage.write(key: "TT_WEBID", value: webId);
+    storage.write(key: "TT_USER", value: username);
+    storage.write(key: "TT_LANG", value: lang);
+
+    // Update locals
+    _loginToken = token;
+    _webId = webId;
+    _userInfo = await API.getAuthorInfo(Author(uniqueId: username));
+    _lang = lang;
+
+    return Future.value();
+  }
+
+  /// Get a reference to the currently logged-in user
+  static AuthorResult getLogin() => _userInfo;
 
   /// Get an [author]'s extended info.
   ///
@@ -199,7 +281,11 @@ class API {
       ApiStream(count, (count, cursor) {
         // TODO: Make this allow for querying anything, not just the trending
         String url = _getFormattedUrl("api/item_list", {
-          "id": _userInfo.id,
+          "id": 1,
+          "uid": _loginToken != null ? _userInfo.user.id : "",
+          "did": _webId != null ? _webId : "",
+          "cookieEnabled": _loginToken != null ? true : "",
+          "verifyFp": "",
           "secUid": "",
           "sourceType": 12,
           "type": TYPE_TRENDING_VIDEOS,
@@ -320,10 +406,8 @@ class API {
       "needItemList": false,
       "keyWord": "",
       "offset": cursor,
-      "count": count,
-      "language": "en"
+      "count": count
     });
-    // "https://m.tiktok.com/api/discover/challenge/?discoverType=0&needItemList=false&keyWord=&offset=$cursor&count=$count&language=en&appId=1233";
 
     dynamic asJson = await _fetchResults(url);
     List<dynamic> hashtags = asJson["challengeInfoList"];
@@ -398,7 +482,8 @@ class API {
     //   Note: We attach the login cookie if available
     var response = await http.get(signedUrl, headers: {
       "User-Agent": USER_AGENT,
-      "Cookie": _loginToken != null ? "sid_guard: ${_loginToken.value}" : ""
+      "cookie":
+          _loginToken != null ? "sid_guard=${_loginToken.value.toString()}" : ""
     });
 
     // Make sure that we get a valid response
@@ -424,7 +509,7 @@ class API {
 
     // Apply all of the options
     result += options.entries.fold(
-        "?appId=1233",
+        "?appId=1233&language=$_lang",
         (previousValue, element) =>
             "$previousValue&${element.key}=${element.value.toString()}");
 
