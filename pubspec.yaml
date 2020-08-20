@@ -26,8 +26,10 @@ dependencies:
   dataclass: ^0.3.0
   flutter:
     sdk: flutter
+  flutter_secure_storage: ^3.3.3
   flutter_spinkit: ^4.1.2
   flutter_inappwebview: ^4.0.0+4
+  flutter_phoenix: "^0.1.0"
   http: ^0.12.1
   icon_shadow: ^1.0.1
   marquee: ^1.5.2
