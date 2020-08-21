@@ -166,6 +166,7 @@ class ApiStream<T> {
       r = await _stream(count, _maxCursor);
       print("Next: $r");
       _maxCursor = r.nextCursor;
+      hasMore = r.hasMore;
     } catch (e) {
       print("WARNING: Fetching failed with: $e");
       print("WARNING: Failing silently...");
