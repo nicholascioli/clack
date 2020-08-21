@@ -60,6 +60,9 @@ class VideoResult {
   /// Stats related to this video
   final VideoStats stats;
 
+  /// Whether or not the current user has liked this video
+  final bool digged;
+
   VideoResult(
       {this.id,
       this.createTime,
@@ -67,7 +70,8 @@ class VideoResult {
       this.author,
       this.music,
       this.video,
-      this.stats});
+      this.stats,
+      this.digged});
 
   /// Construct a [VideoResult] from a supplied [json] object.
   ///
@@ -80,6 +84,7 @@ class VideoResult {
         author: Author.fromJson(json["author"]),
         music: Music.fromJson(json["music"]),
         video: Video.fromJson(json["video"]),
-        stats: VideoStats.fromJson(json["stats"]));
+        stats: VideoStats.fromJson(json["stats"]),
+        digged: json["digged"]);
   }
 }

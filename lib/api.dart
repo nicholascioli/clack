@@ -262,6 +262,57 @@ class API {
   /// Get a reference to the currently logged-in user
   static AuthorResult getLogin() => _userInfo;
 
+  /// Like (digg) a video, if logged in.
+  ///
+  /// Returns true if the video was successfully liked
+  static Future<bool> diggVideo(VideoResult video, bool shouldLike) async {
+    // Do nothing if not logged in
+    if (!API.isLoggedIn()) return Future.value(false);
+
+    String url = _getFormattedUrl("api/commit/item/digg", {
+      "aid": 1988,
+      "aweme_id": video.id,
+      "uid": _userInfo.user.id,
+      "did": _webId,
+      "device_id": _webId,
+      "verifyFp": "",
+      "cookie_enabled": true,
+      "type": shouldLike ? 1 : 0, // 1 for enable, 0 for disable
+    });
+    // https://m.tiktok.com/api/commit/item/digg/?aid=1988&cookie_enabled=true&appId=1233&did=6863171026114332166&uid=6609695707618492422&device_id=6863171026114332166&aweme_id=6861656038039391494&type=1&verifyFp=
+
+    // Sign the url using TT JS
+    // Note: We construct a headless webview first and then dispose of
+    //   it after we finish generating the code
+    await _webView.run();
+    String code = await sign(url);
+    String signedUrl = "$url&_signature=$code";
+    await _webView.dispose();
+    print("GOT URL: $signedUrl");
+
+    // Make a request for the videos
+    //   Note: We attach the login cookie if available
+    var response = await http.post(signedUrl,
+        headers: {
+          "User-Agent": USER_AGENT,
+          "cookie": _loginToken != null
+              ? "sid_guard=${_loginToken.value.toString()}"
+              : "",
+          "Accept": "application/json, text/plain, */*",
+          "Content-Type": "application/x-www-form-urlencoded",
+          "DNT": "1",
+          "Origin": "https://www.tiktok.com",
+          "Referer": "https://www.tiktok.com/"
+        },
+        body: "");
+
+    // If we failed to like, let caller know
+    if (response.statusCode != 200) return Future.value(false);
+
+    Map<String, dynamic> asJson = json.decode(response.body);
+    return Future.value(asJson.containsKey("is_digg") && shouldLike);
+  }
+
   /// Get an [author]'s extended info.
   ///
   /// This returns a [Future] as it requires network requests.

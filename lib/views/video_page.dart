@@ -45,6 +45,7 @@ class _VideoPageState extends State<VideoPage>
   VideoPlayerController _controller;
   AnimationController _animation;
 
+  bool _manuallyLiked;
   bool _manuallyPaused = false;
 
   /// Size of the icons in the column of buttons
@@ -107,6 +108,9 @@ class _VideoPageState extends State<VideoPage>
     _animation =
         AnimationController(vsync: this, duration: Duration(seconds: 5));
     _animation.repeat();
+
+    // Copy value to temporary bool
+    _manuallyLiked = widget.videoInfo.digged;
 
     // Get the comment stream ready
     // _comments = API.getVideoCommentStream(widget.videoInfo, 20);
@@ -280,9 +284,13 @@ class _VideoPageState extends State<VideoPage>
                     padding: EdgeInsets.all(0),
                     icon: IconShadowWidget(
                         Icon(Icons.favorite,
-                            size: _iconSize, color: Colors.white),
+                            size: _iconSize,
+                            color: _manuallyLiked ? Colors.red : Colors.white),
                         shadowColor: Colors.black),
-                    onPressed: () => showNotImplemented(context)),
+                    onPressed: () => API
+                        .diggVideo(widget.videoInfo, !_manuallyLiked)
+                        .then(
+                            (value) => setState(() => _manuallyLiked = value))),
                 Text(statToString(widget.videoInfo.stats.diggCount),
                     textAlign: TextAlign.center, style: subTextStyle),
                 SizedBox(
