@@ -4,6 +4,7 @@ import 'package:clack/api/video_result.dart';
 import 'package:clack/views/sound_group.dart';
 import 'package:flutter/material.dart';
 import 'package:icon_shadow/icon_shadow.dart';
+import 'package:like_button/like_button.dart';
 import 'package:marquee/marquee.dart';
 import 'package:share/share.dart';
 import 'package:video_player/video_player.dart';
@@ -40,13 +41,15 @@ class VideoPage extends StatefulWidget {
   _VideoPageState createState() => _VideoPageState();
 }
 
-class _VideoPageState extends State<VideoPage>
-    with SingleTickerProviderStateMixin {
+class _VideoPageState extends State<VideoPage> with TickerProviderStateMixin {
   VideoPlayerController _controller;
   AnimationController _animation;
 
   bool _manuallyLiked;
   bool _manuallyPaused = false;
+
+  /// Needed for triggering the heart animation programatically
+  final GlobalKey<LikeButtonState> _globalKey = GlobalKey<LikeButtonState>();
 
   /// Size of the icons in the column of buttons
   final double _iconSize = 40.0;
@@ -179,6 +182,8 @@ class _VideoPageState extends State<VideoPage>
                                       _manuallyPaused = false;
                                     }
                                   }),
+                              onDoubleTap: () =>
+                                  _globalKey.currentState.onTap(),
                               child: VideoPlayer(_controller))
                           : Image.network(widget.videoInfo.video.originCover
                               .toString()))))),
@@ -258,6 +263,11 @@ class _VideoPageState extends State<VideoPage>
             SizedBox(height: 20)
           ]);
 
+  Future<bool> _handleDigg(bool previous) async {
+    await API.diggVideo(widget.videoInfo, !_manuallyLiked);
+    return !previous;
+  }
+
   /// Generates the column of buttons located on the right
   Widget _buildButtons() => Column(
           mainAxisSize: MainAxisSize.min,
@@ -282,17 +292,20 @@ class _VideoPageState extends State<VideoPage>
                 SizedBox(
                   height: 20,
                 ),
-                IconButton(
-                    padding: EdgeInsets.all(0),
-                    icon: IconShadowWidget(
-                        Icon(Icons.favorite,
-                            size: _iconSize,
-                            color: _manuallyLiked ? Colors.red : Colors.white),
-                        shadowColor: Colors.black),
-                    onPressed: () => API
-                        .diggVideo(widget.videoInfo, !_manuallyLiked)
-                        .then(
-                            (value) => setState(() => _manuallyLiked = value))),
+                LikeButton(
+                    key: _globalKey,
+                    isLiked: _manuallyLiked,
+                    padding: EdgeInsets.zero,
+                    likeCountPadding: EdgeInsets.zero,
+                    likeBuilder: (bool isLiked) {
+                      return Icon(
+                        Icons.favorite,
+                        color: isLiked ? Colors.red : Colors.white,
+                        size: _iconSize,
+                      );
+                    },
+                    size: _iconSize,
+                    onTap: _handleDigg),
                 Text(statToString(widget.videoInfo.stats.diggCount),
                     textAlign: TextAlign.center, style: subTextStyle),
                 SizedBox(

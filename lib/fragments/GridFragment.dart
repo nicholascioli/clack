@@ -35,7 +35,8 @@ class GridFragment extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     // If we have nothing to show, show the empty message
-    if (count < 1 || (stream.length == 0 && stream.hasMore == false))
+    if ((count != null && count < 1) ||
+        (stream.length == 0 && stream.hasMore == false))
       return Center(child: Text(emptyMessage));
 
     final gridDelegate = SliverGridDelegateWithFixedCrossAxisCount(
