@@ -157,6 +157,23 @@ class _UserInfoState extends State<UserInfo>
                                               ))))),
                               Spacer()
                             ]),
+                            (_author.verified
+                                ? Row(children: [
+                                    Spacer(),
+                                    Padding(
+                                        padding:
+                                            EdgeInsets.only(top: 10, bottom: 5),
+                                        child: Row(children: [
+                                          Icon(Icons.check_circle,
+                                              color: Theme.of(context)
+                                                  .accentColor),
+                                          SizedBox(width: 5),
+                                          Text("verified account",
+                                              style: softTextStyle)
+                                        ])),
+                                    Spacer()
+                                  ])
+                                : Container()),
                             SizedBox(height: 10),
                             Row(
                               mainAxisAlignment: MainAxisAlignment.center,
