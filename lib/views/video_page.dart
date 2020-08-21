@@ -110,7 +110,9 @@ class _VideoPageState extends State<VideoPage>
     _animation.repeat();
 
     // Copy value to temporary bool
-    _manuallyLiked = widget.videoInfo.digged;
+    // Note: We check if null because not all videos have this property...
+    _manuallyLiked =
+        widget.videoInfo.digged != null ? widget.videoInfo.digged : false;
 
     // Get the comment stream ready
     // _comments = API.getVideoCommentStream(widget.videoInfo, 20);
