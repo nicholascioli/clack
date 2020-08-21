@@ -1,9 +1,11 @@
+import 'dart:async';
+
 import 'package:audioplayer/audioplayer.dart';
 import 'package:clack/api.dart';
 import 'package:clack/api/music_result.dart';
 import 'package:clack/api/video_result.dart';
+import 'package:clack/fragments/GridFragment.dart';
 import 'package:clack/utility.dart';
-import 'package:clack/views/video_feed.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:icon_shadow/icon_shadow.dart';
@@ -27,6 +29,7 @@ class _SoundGroupState extends State<SoundGroup> {
   final TextStyle textStyle = TextStyle(color: Colors.grey);
 
   final AudioPlayer _player = AudioPlayer();
+  StreamSubscription<AudioPlayerState> _updateSubscription;
   ApiStream<VideoResult> _videos;
   bool _hasInit = false;
 
@@ -34,6 +37,7 @@ class _SoundGroupState extends State<SoundGroup> {
   void dispose() {
     // Stop the player
     _player.stop();
+    _updateSubscription.cancel();
 
     // Continue death
     super.dispose();
@@ -42,7 +46,8 @@ class _SoundGroupState extends State<SoundGroup> {
   @override
   void initState() {
     // Update the UI when player changes state
-    _player.onPlayerStateChanged.listen((event) => setState(() {}));
+    _updateSubscription =
+        _player.onPlayerStateChanged.listen((event) => setState(() {}));
 
     // Continue init
     super.initState();
@@ -90,7 +95,12 @@ class _SoundGroupState extends State<SoundGroup> {
         SliverPadding(
             padding: EdgeInsets.only(top: 20, bottom: 20),
             sliver: SliverToBoxAdapter(child: _buildHeader())),
-        _buildVideoList()
+        GridFragment(
+            asSliver: true,
+            stream: _videos,
+            showPlayCount: false,
+            showOriginal: true,
+            heroTag: "soundGroup")
       ]);
 
   Widget _buildHeader() => IntrinsicHeight(
@@ -165,63 +175,4 @@ class _SoundGroupState extends State<SoundGroup> {
                   ))
             ]),
       ));
-
-  Widget _buildVideoList() => SliverGrid(
-      delegate: SliverChildBuilderDelegate((context, index) => AspectRatio(
-          aspectRatio: 1,
-          child: GestureDetector(
-              onTap: () {
-                // Stop the music, if playing
-                _player.stop();
-
-                // Start the VideoFeed
-                Navigator.pushNamed(context, VideoFeed.routeName,
-                    arguments: VideoFeedArgs(_videos, index, null,
-                        heroTag: "soundGroup"));
-              },
-              child: Container(
-                  color: Colors.black,
-                  child: Hero(
-                      tag: "soundGroup_video_page_$index",
-                      child: Stack(children: [
-                        AspectRatio(
-                            aspectRatio: 1,
-                            child: FittedBox(
-                                fit: BoxFit.fitWidth,
-                                child: _videos[index] == null
-                                    ? Padding(
-                                        padding: EdgeInsets.all(40),
-                                        child: SpinKitFadingCube(
-                                            color: Colors.grey))
-                                    : Image.network(_videos[index]
-                                        .video
-                                        .dynamicCover
-                                        .toString()))),
-                        Align(
-                            alignment: Alignment.topLeft,
-                            child: _videos[index] == null ||
-                                    !_videos[index].video.isOriginal
-                                ? Container()
-                                : Padding(
-                                    padding: EdgeInsets.all(5),
-                                    child: ClipRRect(
-                                      borderRadius: BorderRadius.only(
-                                          bottomLeft: Radius.circular(5),
-                                          topLeft: Radius.circular(5),
-                                          topRight: Radius.circular(20),
-                                          bottomRight: Radius.circular(20)),
-                                      child: Container(
-                                        color: Colors.yellow,
-                                        child: Padding(
-                                            padding: EdgeInsets.only(
-                                                left: 5,
-                                                top: 5,
-                                                bottom: 5,
-                                                right: 10),
-                                            child: Text("Original")),
-                                      ),
-                                    )))
-                      ])))))),
-      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 3, crossAxisSpacing: 3, mainAxisSpacing: 3));
 }

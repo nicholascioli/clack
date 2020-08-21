@@ -1,7 +1,6 @@
-import 'dart:math';
-
 import 'package:clack/api.dart';
 import 'package:clack/api/author_result.dart';
+import 'package:clack/fragments/GridFragment.dart';
 import 'package:clack/views/full_image.dart';
 import 'package:clack/api/shared_types.dart';
 import 'package:clack/utility.dart';
@@ -9,12 +8,10 @@ import 'package:clack/api/video_result.dart';
 import 'package:clack/views/video_feed.dart';
 import 'package:extended_tabs/extended_tabs.dart';
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_phoenix/flutter_phoenix.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
-import 'package:icon_shadow/icon_shadow.dart';
 import 'package:share/share.dart';
 
 /// Contains all info about an [Author]
@@ -54,16 +51,6 @@ class _UserInfoState extends State<UserInfo>
   /// Following, Followers, and Hearts
   final softTextStyle =
       TextStyle(color: Colors.grey, fontSize: 12, height: 1.5);
-
-  /// Text style for the play count overlay on each video thumbnail
-  final playCountTextStyle =
-      TextStyle(color: Colors.white, fontSize: 15, shadows: [
-    Shadow(
-      offset: Offset(1.0, 1.0),
-      blurRadius: 3.0,
-      color: Color.fromARGB(255, 0, 0, 0),
-    ),
-  ]);
 
   /// The {Author} to show
   Author _author;
@@ -285,29 +272,43 @@ class _UserInfoState extends State<UserInfo>
                                   )))
                         ],
                     // TODO: Figure out reliable padding for pinned SliverAppBar above
-                    body: Padding(
-                        padding: EdgeInsets.only(top: 40),
-                        child: ExtendedTabBarView(
-                          linkWithAncestor: true,
-                          children: [
-                            _buildVideoList(
-                                _authorVideos,
-                                (stats) => stats.videoCount,
-                                (author) => author.stats.videoCount > 0,
-                                false,
-                                "Nothing to see here..."),
-                            _buildVideoList(
-                                _authorFavoritedVideos,
-                                (stats) => stats.diggCount,
-                                (_) =>
-                                    _author.openFavorite ||
-                                    widget.isCurrentUser,
-                                true,
-                                _author.openFavorite || widget.isCurrentUser
-                                    ? "Nothing to see here..."
-                                    : "@${_author.uniqueId} has hidden their liked videos.")
-                          ],
-                        ))))));
+                    body: FutureBuilder(
+                        future: _authorResult,
+                        builder:
+                            (context, AsyncSnapshot<AuthorResult> snapshot) {
+                          // Check if we have data to work with
+                          if (snapshot.connectionState ==
+                                  ConnectionState.done &&
+                              snapshot.hasData) {
+                            final authorInfo = snapshot.data;
+
+                            // Return the two grid lists
+                            return Padding(
+                                padding: EdgeInsets.only(top: 40),
+                                child: ExtendedTabBarView(
+                                    linkWithAncestor: true,
+                                    children: [
+                                      GridFragment(
+                                          stream: _authorVideos,
+                                          count: authorInfo.stats.videoCount,
+                                          heroTag: "userVideos"),
+                                      GridFragment(
+                                          stream: _authorFavoritedVideos,
+                                          count: authorInfo.stats.diggCount,
+                                          emptyMessage:
+                                              "@${authorInfo.user.uniqueId} has hidden their liked videos.",
+                                          showUserInfo: false,
+                                          heroTag: "likedVideos")
+                                    ]));
+                          } else {
+                            // Otherwise, show loading
+                            return Center(
+                                child: SpinKitFadingGrid(
+                              color: Colors.black,
+                              size: 50,
+                            ));
+                          }
+                        })))));
   }
 
   /// Generates a column with a specific [AuthorStat].
@@ -332,92 +333,6 @@ class _UserInfoState extends State<UserInfo>
           )
         ],
       );
-
-  /// Generates a [GridView] with the videos of a specific stream
-  ///
-  /// The [stream] is resued by passing it to the [VideoFeed] upon construction.
-  Widget _buildVideoList(
-      ApiStream<VideoResult> stream,
-      int Function(AuthorStats stats) count,
-      bool Function(AuthorResult res) condition,
-      bool showUserInfo,
-      String emptyMessage) {
-    final gridBuilder = (AuthorResult userInfo) => GridView.builder(
-          shrinkWrap: true,
-          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-              mainAxisSpacing: 3, crossAxisSpacing: 3, crossAxisCount: 3),
-          itemCount: max(count(userInfo.stats), 0),
-          itemBuilder: (context, index) {
-            return GestureDetector(
-                onTap: () => Navigator.pushNamed(context, VideoFeed.routeName,
-                    arguments: VideoFeedArgs(
-                        stream, index, max(count(userInfo.stats), 0),
-                        showUserInfo: showUserInfo, heroTag: "userInfo")),
-                child: Container(
-                    color: Colors.black,
-                    child: Hero(
-                        tag: "userInfo_video_page_$index",
-                        child: Stack(children: [
-                          AspectRatio(
-                              aspectRatio: 1,
-                              child: FittedBox(
-                                  fit: BoxFit.fitWidth,
-                                  child: stream[index] == null
-                                      ? Padding(
-                                          padding: EdgeInsets.all(40),
-                                          child: SpinKitFadingCube(
-                                              color: Colors.grey))
-                                      : Image.network(stream[index]
-                                          .video
-                                          .dynamicCover
-                                          .toString()))),
-                          Align(
-                              alignment: Alignment.bottomLeft,
-                              child: Padding(
-                                  padding: EdgeInsets.all(5),
-                                  child: stream[index] == null
-                                      ? Container()
-                                      : Row(children: [
-                                          IconShadowWidget(
-                                            Icon(
-                                              Icons.play_arrow,
-                                              color: Colors.white,
-                                            ),
-                                            shadowColor: Colors.black,
-                                          ),
-                                          Text(
-                                            statToString(
-                                                stream[index].stats.playCount),
-                                            style: playCountTextStyle,
-                                          )
-                                        ])))
-                        ]))));
-          },
-        );
-
-    return FutureBuilder(
-        future: _authorResult,
-        builder: (context, AsyncSnapshot<AuthorResult> snapshot) {
-          // Check if we have data to work with
-          if (snapshot.connectionState == ConnectionState.done &&
-              snapshot.hasData) {
-            // Check if we have videos to show
-            if (condition(snapshot.data)) {
-              return gridBuilder(snapshot.data);
-            } else {
-              // Otherwise, show empty text
-              return Center(child: Text(emptyMessage));
-            }
-          } else {
-            // Otherwise, show loading
-            return Center(
-                child: SpinKitFadingGrid(
-              color: Colors.black,
-              size: 50,
-            ));
-          }
-        });
-  }
 
   /// Moves back to the video when back is pressed
   Future<bool> _handleBack(BuildContext ctx) {
