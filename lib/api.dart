@@ -388,10 +388,26 @@ class API {
   /// NOT IMPLEMENTED
   ///
   /// Get an [ApiStream]<[Comment]> of a [video]'s comments.
-  static ApiStream<dynamic> getVideoCommentStream(
-      VideoResult video, int count) {
-    throw Exception("Not Implemented");
-  }
+  static ApiStream<Comment> getVideoCommentStream(
+          VideoResult video, int count) =>
+      ApiStream(count, (count, maxCursor) {
+        String url = _getFormattedUrl(
+            "api/comment/list",
+            {
+              "aid": 1988,
+              "cookie_enabled": true,
+              "did": _webId,
+              "uid": _userInfo.user.id,
+              "aweme_id": video.id,
+              "cursor": maxCursor,
+              "count": count,
+              "verifyFp": ""
+            },
+            useMobile: false);
+
+        return _getCommentsForVideo(url, count, maxCursor);
+        // https://www.tiktok.com/api/comment/list/?aid=1988&cookie_enabled=trueappId=1233&did=6863727533905806854&uid=6609695707618492422&aweme_id=6857366494456712454&cursor=0&count=20&verifyFp=&_signature=_02B4Z6wo00f01Do7o4QAAIBACBsS33KIX3g6OqcAAFHT20
+      });
 
   static ApiStream<MusicResult> getVideosForMusic(Music m, int count) =>
       ApiStream(count, (count, maxCursor) {
@@ -492,6 +508,22 @@ class API {
         hasMore, maxCursor, array.map((e) => VideoResult.fromJson(e)));
   }
 
+  static Future<ApiResult<Comment>> _getCommentsForVideo(
+      String url, int count, int cursor) async {
+    dynamic asJson = await _fetchResults(url);
+    List<dynamic> array = asJson["comments"];
+
+    // Short out if we get no results
+    if (array == null) return ApiResult(false, cursor, []);
+
+    bool hasMore = asJson["has_more"] == 1;
+    int maxCursor = asJson["cursor"];
+    int total = asJson["total"];
+
+    return ApiResult(
+        hasMore, maxCursor, array.map((e) => Comment.fromJson(e, total)));
+  }
+
   /// Gets an [ApiResult] containing a list of videos that use a given [Music] track
   static Future<ApiResult<MusicResult>> _getVideosForMusic(
       String url, int count, int cursor) async {
@@ -533,8 +565,14 @@ class API {
     //   Note: We attach the login cookie if available
     var response = await http.get(signedUrl, headers: {
       "User-Agent": USER_AGENT,
-      "cookie":
-          _loginToken != null ? "sid_guard=${_loginToken.value.toString()}" : ""
+      "cookie": _loginToken != null
+          ? "sid_guard=${_loginToken.value.toString()}"
+          : "",
+      "Accept": "application/json, text/plain, */*",
+      "Content-Type": "application/x-www-form-urlencoded",
+      "DNT": "1",
+      "Origin": "https://www.tiktok.com",
+      "Referer": "https://www.tiktok.com/"
     });
 
     // Make sure that we get a valid response
@@ -554,9 +592,9 @@ class API {
   /// Get a url with formatted [options]
   ///
   /// The endpoint is always assumed to start with https://m.tiktok.com/
-  static String _getFormattedUrl(
-      String endpoint, Map<String, dynamic> options) {
-    String result = "https://m.tiktok.com/$endpoint/";
+  static String _getFormattedUrl(String endpoint, Map<String, dynamic> options,
+      {bool useMobile = true}) {
+    String result = "https://${useMobile ? "m" : "www"}.tiktok.com/$endpoint/";
 
     // Apply all of the options
     result += options.entries.fold(

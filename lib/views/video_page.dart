@@ -1,4 +1,6 @@
 import 'package:clack/api.dart';
+import 'package:clack/api/shared_types.dart';
+import 'package:clack/fragments/CommentsFragment.dart';
 import 'package:clack/utility.dart';
 import 'package:clack/api/video_result.dart';
 import 'package:clack/views/sign_in_webview.dart';
@@ -92,7 +94,7 @@ class _VideoPageState extends State<VideoPage> with TickerProviderStateMixin {
   ]);
 
   // TODO: Implement a comment stream for fetching this video's comments
-  // ApiStream<dynamic> _comments;
+  ApiStream<Comment> _comments;
 
   @override
   void initState() {
@@ -119,7 +121,7 @@ class _VideoPageState extends State<VideoPage> with TickerProviderStateMixin {
         widget.videoInfo.digged != null ? widget.videoInfo.digged : false;
 
     // Get the comment stream ready
-    // _comments = API.getVideoCommentStream(widget.videoInfo, 20);
+    _comments = API.getVideoCommentStream(widget.videoInfo, 20);
   }
 
   @override
@@ -338,7 +340,7 @@ class _VideoPageState extends State<VideoPage> with TickerProviderStateMixin {
                         Icon(Icons.comment,
                             size: _iconSize, color: Colors.white),
                         shadowColor: Colors.black),
-                    onPressed: () => showNotImplemented(context)),
+                    onPressed: () => _showComments()),
                 Text(statToString(widget.videoInfo.stats.commentCount),
                     textAlign: TextAlign.center, style: subTextStyle),
                 SizedBox(
@@ -394,8 +396,7 @@ class _VideoPageState extends State<VideoPage> with TickerProviderStateMixin {
 
     // Make a new one using the VideoResult
     var oldController = _controller;
-    _controller =
-        VideoPlayerController.network(vid.video.downloadAddr.toString());
+    _controller = VideoPlayerController.network(vid.video.playAddr.toString());
     oldController?.pause()?.then((value) => oldController.dispose());
 
     // Initialize the video so that it may start playing
@@ -404,5 +405,28 @@ class _VideoPageState extends State<VideoPage> with TickerProviderStateMixin {
     // Configure the video to loop indefinitely and start playback
     _controller.setLooping(true);
     _controller.play();
+  }
+
+  void _showComments() {
+    if (!API.isLoggedIn()) {
+      Scaffold.of(context).showSnackBar(SnackBar(
+        backgroundColor: Colors.black,
+        content: Text("You must sign in to view comments.",
+            style: TextStyle(color: Colors.white)),
+        action: SnackBarAction(
+          label: "Sign in",
+          onPressed: () =>
+              Navigator.pushNamed(context, SignInWebview.routeName),
+        ),
+      ));
+      return;
+    }
+
+    showModalBottomSheet(
+        backgroundColor: Colors.transparent,
+        context: Scaffold.of(context).context,
+        isScrollControlled: true,
+        builder: (ctx) => CommentsFragment(
+            comments: _comments, onClose: () => Navigator.pop(ctx)));
   }
 }

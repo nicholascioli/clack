@@ -33,6 +33,9 @@ Coming soon.
 * Browse trending hashtags
 * Browse videos by music
 * Browse videos by hashtag
+* View a video's comments
+* (Un)like a video
+* Swipe to refresh video list (or press home button)
 * View Video stats
 	* Like count
 	* Comment Count

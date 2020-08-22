@@ -223,10 +223,99 @@ class ShareMeta {
   }
 }
 
-/// A comment for a specific [VideoResul]
-///
-/// NOT IMPLEMENTED
+/// A comment for a specific [VideoResult]
 @dataClass
 class Comment {
-  // TODO: Implement this data class
+  /// Internal ID
+  final String cid;
+
+  /// The comment's message
+  final String text;
+
+  /// Internal mapped ID
+  /// Note: Original is aweme_id
+  final String awemeId;
+
+  /// Time the comment was posted
+  /// Note: Original is create_time
+  final DateTime createTime;
+
+  /// How many likes this comment has received
+  /// Note: Original is digg_count
+  final int diggCount;
+
+  /// ?
+  final int status;
+
+  /// Stripped User info
+  final Author user;
+
+  /// ???
+  /// Note: Original is reply_id
+  final String replyId;
+
+  /// Whether or not the current user has liked this comment
+  /// Note: Original is user_digged
+  final bool userDigged;
+
+  /// ??? Possibly the reply to show?
+  /// Note: Original is reply_comment
+  final Comment replyComment;
+
+  /// How many replies this comment has
+  /// Note: Original is reply_comment_total
+  final int replyCommentTotal;
+
+  /// Whether or not the author of the original video liked this post.
+  /// Note: Original is is_author_digged
+  final bool isAuthorDigged;
+
+  /// ???
+  /// Note: Original is user_burried
+  final bool userBuried;
+
+  /// Total count of comments for this video
+  final int totalCount;
+
+  Comment(
+      {this.cid,
+      this.text,
+      this.awemeId,
+      this.createTime,
+      this.diggCount,
+      this.status,
+      this.user,
+      this.replyId,
+      this.userDigged,
+      this.replyComment,
+      this.replyCommentTotal,
+      this.isAuthorDigged,
+      this.userBuried,
+      this.totalCount});
+
+  factory Comment.fromJson(Map<String, dynamic> json, int totalCount) {
+    Map<String, dynamic> user = json["user"];
+
+    return Comment(
+        cid: json["cid"],
+        text: json["text"],
+        awemeId: json["aweme_id"],
+        createTime: DateTime.fromMillisecondsSinceEpoch(
+            json["create_time"] * 1000), // Timestamp is in seconds
+        diggCount: json["digg_count"],
+        status: json["status"],
+        user: Author(
+            id: user["id"],
+            nickname: user["nickname"],
+            avatarThumb: Uri.parse(user["avatar_thumb"]["url_list"][0]),
+            uniqueId: user["unique_id"],
+            secUid: user["sec_uid"]),
+        replyId: json["reply_id"],
+        userDigged: json["user_digged"] == 1,
+        replyComment: null, // TODO: Figure out what this is...
+        replyCommentTotal: json["reply_comment_total"],
+        isAuthorDigged: json["is_author_digged"] == 1,
+        userBuried: json["user_buried"] == 1,
+        totalCount: totalCount);
+  }
 }

@@ -79,7 +79,8 @@ class VideoResult {
   factory VideoResult.fromJson(Map<String, dynamic> json) {
     return VideoResult(
         id: json["id"],
-        createTime: DateTime.fromMillisecondsSinceEpoch(json["createTime"]),
+        createTime: DateTime.fromMillisecondsSinceEpoch(
+            json["createTime"] * 1000), // Timestamp is in seconds
         desc: json["desc"],
         author: Author.fromJson(json["author"]),
         music: Music.fromJson(json["music"]),

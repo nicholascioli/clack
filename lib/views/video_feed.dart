@@ -64,7 +64,6 @@ class VideoFeed extends StatefulWidget {
 }
 
 class _VideoFeedState extends State<VideoFeed> {
-  // TODO: Make this depend on whether the user is logged in or not.
   /// The [ApiStream]<[VideoResult]> of trending videos
   ///
   /// This will always be the trending videos, but should be updated to
