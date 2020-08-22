@@ -1,6 +1,7 @@
 import 'package:clack/api.dart';
 import 'package:clack/utility.dart';
 import 'package:clack/api/video_result.dart';
+import 'package:clack/views/sign_in_webview.dart';
 import 'package:clack/views/sound_group.dart';
 import 'package:flutter/material.dart';
 import 'package:icon_shadow/icon_shadow.dart';
@@ -172,21 +173,23 @@ class _VideoPageState extends State<VideoPage> with TickerProviderStateMixin {
                       aspectRatio: widget.videoInfo.video.width /
                           widget.videoInfo.video.height,
                       child: _controller.value.initialized
-                          ? GestureDetector(
-                              onTap: () => setState(() {
-                                    if (_controller.value.isPlaying) {
-                                      _controller.pause();
-                                      _manuallyPaused = true;
-                                    } else {
-                                      _controller.play();
-                                      _manuallyPaused = false;
-                                    }
-                                  }),
-                              onDoubleTap: () =>
-                                  _globalKey.currentState.onTap(),
-                              child: VideoPlayer(_controller))
+                          ? VideoPlayer(_controller)
                           : Image.network(widget.videoInfo.video.originCover
                               .toString()))))),
+
+      // Full screen touch area for controling the video
+      GestureDetector(
+          onTap: () => setState(() {
+                if (_controller.value.isPlaying) {
+                  _controller.pause();
+                  _manuallyPaused = true;
+                } else {
+                  _controller.play();
+                  _manuallyPaused = false;
+                }
+              }),
+          onDoubleTap: () => _globalKey.currentState.onTap()),
+
       // Then we show relevant text info
       Align(
           alignment: Alignment.bottomLeft,
@@ -199,8 +202,10 @@ class _VideoPageState extends State<VideoPage> with TickerProviderStateMixin {
                     Expanded(child: _buildTextInfo()),
                     _buildButtons(),
                   ]))),
+
       // Then we (optionally) show the controls
-      Align(
+      IgnorePointer(
+          child: Align(
         alignment: Alignment.center,
         child: !_controller.value.isPlaying
             ? IconShadowWidget(
@@ -212,7 +217,7 @@ class _VideoPageState extends State<VideoPage> with TickerProviderStateMixin {
                 shadowColor: Colors.black,
               )
             : Container(),
-      )
+      ))
     ]);
   }
 
@@ -264,8 +269,24 @@ class _VideoPageState extends State<VideoPage> with TickerProviderStateMixin {
           ]);
 
   Future<bool> _handleDigg(bool previous) async {
-    await API.diggVideo(widget.videoInfo, !_manuallyLiked);
-    return !previous;
+    // Show message if not logged in
+    if (!API.isLoggedIn()) {
+      Scaffold.of(context).showSnackBar(SnackBar(
+        backgroundColor: Colors.black,
+        content: Text("You must sign in to like a video.",
+            style: TextStyle(color: Colors.white)),
+        action: SnackBarAction(
+          label: "Sign in",
+          onPressed: () =>
+              Navigator.pushNamed(context, SignInWebview.routeName),
+        ),
+      ));
+      return Future.value(false);
+    }
+
+    // Otherwise, attempt to like the video
+    bool newValue = await API.diggVideo(widget.videoInfo, !previous);
+    return newValue;
   }
 
   /// Generates the column of buttons located on the right
@@ -297,13 +318,13 @@ class _VideoPageState extends State<VideoPage> with TickerProviderStateMixin {
                     isLiked: _manuallyLiked,
                     padding: EdgeInsets.zero,
                     likeCountPadding: EdgeInsets.zero,
-                    likeBuilder: (bool isLiked) {
-                      return Icon(
-                        Icons.favorite,
-                        color: isLiked ? Colors.red : Colors.white,
-                        size: _iconSize,
-                      );
-                    },
+                    likeBuilder: (bool isLiked) => IconShadowWidget(
+                        Icon(
+                          Icons.favorite,
+                          color: isLiked ? Colors.red : Colors.white,
+                          size: _iconSize,
+                        ),
+                        shadowColor: Colors.black),
                     size: _iconSize,
                     onTap: _handleDigg),
                 Text(statToString(widget.videoInfo.stats.diggCount),
