@@ -5,6 +5,7 @@ import 'package:clack/utility.dart';
 import 'package:clack/views/video_feed.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
+import 'package:transparent_image/transparent_image.dart';
 
 class Discover extends StatefulWidget {
   final void Function(VideoFeedActivePage active) setActive;
@@ -111,36 +112,38 @@ class _DiscoverState extends State<Discover> {
                                 child:
                                     Text(statToString(ht.stats.videoCount))))),
                   ])),
-              _hashtagVideos[index] != null
-                  ? SizedBox(
-                      height: 150,
-                      child: ListView.builder(
-                          scrollDirection: Axis.horizontal,
-                          shrinkWrap: true,
-                          itemBuilder: (innerContext, innerIndex) {
-                            final videos = _hashtagVideos[index];
 
-                            return Padding(
-                                padding: EdgeInsets.only(
-                                    left: (innerIndex == 0) ? 10 : 3),
-                                child: GestureDetector(
-                                    onTap: () => Navigator.pushNamed(context, VideoFeed.routeName,
-                                        arguments: VideoFeedArgs(videos, innerIndex, null,
-                                            heroTag: ht.title)),
-                                    child: Hero(
-                                        tag:
-                                            "${ht.title}_video_page_$innerIndex",
-                                        child: Container(
-                                            color: Colors.black,
-                                            child: AspectRatio(
-                                                aspectRatio: 0.75,
+              // Show the list of videos
+              SizedBox(
+                  height: 150,
+                  child: ListView.builder(
+                      scrollDirection: Axis.horizontal,
+                      shrinkWrap: true,
+                      itemBuilder: (innerContext, innerIndex) {
+                        final videos = _hashtagVideos[index];
+
+                        return Padding(
+                            padding: EdgeInsets.only(
+                                left: (innerIndex == 0) ? 10 : 3),
+                            child: GestureDetector(
+                                onTap: () => Navigator.pushNamed(context, VideoFeed.routeName,
+                                    arguments: VideoFeedArgs(videos, innerIndex, null,
+                                        heroTag: ht.title)),
+                                child: Hero(
+                                    tag: "${ht.title}_video_page_$innerIndex",
+                                    child: Container(
+                                        color: Colors.black,
+                                        child: AspectRatio(
+                                            aspectRatio: 0.75,
+                                            child: FittedBox(
+                                                fit: BoxFit.fitWidth,
                                                 child: videos[innerIndex] == null
-                                                    ? Container(
-                                                        child: SpinKitFadingCube(color: Colors.white),
-                                                        color: Colors.black)
-                                                    : FittedBox(fit: BoxFit.fitWidth, child: Image.network(videos[innerIndex].video.dynamicCover.toString())))))));
-                          }))
-                  : SpinKitCubeGrid(color: Colors.black),
+                                                    ? Container()
+                                                    : FadeInImage.memoryNetwork(
+                                                        fadeInDuration: Duration(milliseconds: 300),
+                                                        placeholder: kTransparentImage,
+                                                        image: videos[innerIndex].video.dynamicCover.toString())))))));
+                      })),
               SizedBox(height: 10),
               Divider()
             ]));

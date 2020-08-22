@@ -2,8 +2,8 @@ import 'package:clack/api.dart';
 import 'package:clack/api/video_result.dart';
 import 'package:clack/views/video_feed.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:icon_shadow/icon_shadow.dart';
+import 'package:transparent_image/transparent_image.dart';
 
 import '../utility.dart';
 
@@ -59,35 +59,34 @@ class GridFragment extends StatelessWidget {
   Widget _buildElement(BuildContext ctx, int index) {
     // If we have reached the true end of the stream, return null to
     // signal that we have finished
-    if (stream[index] == null && stream.hasMore == false) return null;
+    if (stream[index] == null) return null;
 
     // Otherwise, build the element...
     return GestureDetector(
         onTap: () => Navigator.pushNamed(ctx, VideoFeed.routeName,
             arguments: VideoFeedArgs(stream, index, count,
                 showUserInfo: showUserInfo, heroTag: heroTag)),
-        child: Container(
-            color: Colors.black,
-            child: Stack(children: [
-              // Clipped square preview
-              Hero(
-                  tag: "${heroTag}_video_page_$index",
+        child: Stack(children: [
+          // Clipped square preview
+          Hero(
+              tag: "${heroTag}_video_page_$index",
+              child: Container(
+                  color: Colors.black,
                   child: AspectRatio(
                       aspectRatio: 1,
                       child: FittedBox(
                           fit: BoxFit.fitWidth,
-                          child: stream[index] == null
-                              ? Padding(
-                                  padding: EdgeInsets.all(40),
-                                  child: SpinKitFadingCube(color: Colors.grey))
-                              : Image.network(stream[index]
+                          child: FadeInImage.memoryNetwork(
+                              fadeInDuration: Duration(milliseconds: 300),
+                              placeholder: kTransparentImage,
+                              image: stream[index]
                                   .video
                                   .dynamicCover
-                                  .toString())))),
-              // Optional play count
-              showPlayCount ? _playCount(index) : Container(),
-              showOriginal ? _originalText(index) : Container()
-            ])));
+                                  .toString()))))),
+          // Optional play count
+          showPlayCount ? _playCount(index) : Container(),
+          showOriginal ? _originalText(index) : Container()
+        ]));
   }
 
   /// Show a play count

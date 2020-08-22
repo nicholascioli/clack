@@ -36,6 +36,7 @@ dependencies:
   marquee: ^1.5.2
   photo_view: ^0.9.2
   share: ^0.6.4+3
+  transparent_image: ^1.0.0
   tuple: ^1.0.3
   wakelock: ^0.1.4+2
   video_player: '>=0.10.11+2 <2.0.0'
