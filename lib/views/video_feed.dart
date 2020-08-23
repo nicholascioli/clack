@@ -213,7 +213,8 @@ class _VideoFeedState extends State<VideoFeed> {
           IconButton(
               iconSize: 30,
               padding: EdgeInsets.all(2),
-              icon: Icon(icon, color: Theme.of(context).accentIconTheme.color),
+              icon: Icon(icon,
+                  color: getThemeColor(_prefs, SettingsView.themeIconColor)),
               onPressed: () {
                 // Allow for switching between the states
                 print("PUSHED! Setting from $_activePage to $active");
@@ -242,6 +243,7 @@ class _VideoFeedState extends State<VideoFeed> {
         ]));
 
     return BottomAppBar(
+        color: getThemeColor(_prefs, SettingsView.themeBottomBarColor),
         elevation: 0,
         child: ButtonBar(
           alignment: MainAxisAlignment.spaceEvenly,
