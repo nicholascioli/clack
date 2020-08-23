@@ -157,9 +157,13 @@ class _VideoPageState extends State<VideoPage> with TickerProviderStateMixin {
   Widget _buildPage() {
     // Handle auto-playing when set as the active page
     if (_controller.value.initialized) {
-      if (widget.index != widget.currentIndex)
-        _controller.pause();
-      else if (!_manuallyPaused) _controller.play();
+      if (widget.index != widget.currentIndex) {
+        _controller
+            .pause()
+            .then((value) => _controller.seekTo(Duration(seconds: 0)));
+      } else if (!_manuallyPaused) {
+        _controller.play();
+      }
     }
 
     // Create the view
