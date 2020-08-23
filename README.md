@@ -50,9 +50,13 @@ Coming soon.
 	* User's videos
 	* User's liked videos (if public)
 * View notifications (placeholder)
-* View profile (placeholder)
+* View profile
 * Share a user
 * Share a video
 * Share a videos by music track
+* Change app settings
+	* Change app theme colors
+	* Enable / disable always HD videos
+	* Change User-Agent for API requests (Placeholder)
 
 More to (hopefully) come!
