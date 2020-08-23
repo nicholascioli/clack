@@ -50,10 +50,10 @@ class _ProfileViewState extends State<ProfileView> {
               children: [
                 Icon(Icons.person_outline, size: 80, color: Colors.grey),
                 SizedBox(height: 20),
-                Text("Sign up for an account"),
+                Text("Sign in to view your account"),
                 SizedBox(height: 20),
                 RaisedButton(
-                    child: Text("Sign up"),
+                    child: Text("Sign in"),
                     onPressed: () =>
                         Navigator.pushNamed(context, SignInWebview.routeName))
               ],

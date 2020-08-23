@@ -32,7 +32,7 @@ class NotificationView extends StatelessWidget {
                 Text("Messages and notifications will appear here"),
                 SizedBox(height: 20),
                 RaisedButton(
-                    child: Text("Sign up"),
+                    child: Text("Sign in"),
                     onPressed: () => showNotImplemented(context))
               ],
             ),
