@@ -86,7 +86,8 @@ class _SoundGroupState extends State<SoundGroup> {
                 : "${_videos[0].music.title} by ${_videos[0].music.authorName}")),
         body: _videos[0] == null
             ? Center(
-                child: SpinKitCubeGrid(color: Colors.black),
+                child: SpinKitCubeGrid(
+                    color: Theme.of(context).textTheme.headline1.color),
               )
             : _buildPage());
   }

@@ -10,7 +10,6 @@ import 'package:extended_tabs/extended_tabs.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
-import 'package:flutter_phoenix/flutter_phoenix.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:share/share.dart';
 
@@ -25,12 +24,15 @@ class UserInfo extends StatefulWidget {
 
   final Author Function() authorGetter;
   final bool isCurrentUser;
+  final List<Widget> parentActions;
 
-  const UserInfo(this.authorGetter, {this.isCurrentUser = false});
+  const UserInfo(this.authorGetter,
+      {this.isCurrentUser = false, this.parentActions});
 
   /// Create a UserInfo for the currently logged-in user.
-  static UserInfo currentUser() =>
-      UserInfo(() => API.getLogin().user, isCurrentUser: true);
+  static UserInfo currentUser({List<Widget> parentActions}) =>
+      UserInfo(() => API.getLogin().user,
+          isCurrentUser: true, parentActions: parentActions);
 
   @override
   _UserInfoState createState() => _UserInfoState();
@@ -39,12 +41,10 @@ class UserInfo extends StatefulWidget {
 class _UserInfoState extends State<UserInfo>
     with SingleTickerProviderStateMixin {
   /// Text style for an [Author]'s username
-  final userTextStyle =
-      TextStyle(color: Colors.black, fontWeight: FontWeight.bold);
+  final userTextStyle = TextStyle(fontWeight: FontWeight.bold);
 
   /// Text style for an [Author]'s stats
-  final statsTextStyle =
-      TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 20);
+  final statsTextStyle = TextStyle(fontWeight: FontWeight.bold, fontSize: 20);
 
   /// Text style for the text under the stats
   ///
@@ -64,6 +64,11 @@ class _UserInfoState extends State<UserInfo>
   /// The [ApiStream]<[VideoResult]> of the [Author]'s liked videos
   ApiStream<VideoResult> _authorFavoritedVideos;
 
+  /// The actions to show in the appbar.
+  ///
+  /// Prepends actions from [widget.parentActions]
+  List<Widget> _actions;
+
   @override
   void initState() {
     super.initState();
@@ -76,29 +81,22 @@ class _UserInfoState extends State<UserInfo>
 
     _authorVideos.setOnChanged(() => setState(() {}));
     _authorFavoritedVideos.setOnChanged(() => setState(() {}));
+
+    // Change the AppBar's actions when viewing the current user
+    _actions = widget.parentActions != null ? widget.parentActions : [];
+    if (!widget.isCurrentUser) {
+      _actions.add(IconButton(
+          icon: Icon(Icons.share),
+          onPressed: () => _authorResult.then((authorResult) {
+                Share.share(getAuthorShare(authorResult),
+                    subject:
+                        "Check out @${authorResult.user.uniqueId} TikTok!");
+              })));
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    // Change the AppBar's actions when viewing the current user
-    List<Widget> actions;
-    if (widget.isCurrentUser) {
-      actions = [
-        IconButton(
-            icon: Icon(Icons.exit_to_app), onPressed: () => _showLogOutDialog())
-      ];
-    } else {
-      actions = [
-        IconButton(
-            icon: Icon(Icons.share),
-            onPressed: () => _authorResult.then((authorResult) {
-                  Share.share(getAuthorShare(authorResult),
-                      subject:
-                          "Check out @${authorResult.user.uniqueId} TikTok!");
-                }))
-      ];
-    }
-
     // Build the view
     return WillPopScope(
         onWillPop: () => _handleBack(context),
@@ -110,7 +108,7 @@ class _UserInfoState extends State<UserInfo>
                 icon: Icon(Icons.arrow_back),
                 onPressed: () => _handleBack(context),
               ),
-              actions: actions,
+              actions: _actions,
             ),
             body: DefaultTabController(
                 length: 2,
@@ -186,6 +184,9 @@ class _UserInfoState extends State<UserInfo>
                                 future: _authorResult,
                                 builder: (context,
                                     AsyncSnapshot<AuthorResult> snapshot) {
+                                  // Don't show follow buttons if current user
+                                  if (widget.isCurrentUser) return Container();
+
                                   if (snapshot.connectionState ==
                                           ConnectionState.done &&
                                       snapshot.hasData) {
@@ -194,26 +195,21 @@ class _UserInfoState extends State<UserInfo>
                                     // If we aren't following, offer to follow
                                     if (snapshot.data.user.relation == 0) {
                                       buttons = [
-                                        FlatButton(
+                                        RaisedButton(
                                             onPressed: () =>
                                                 showNotImplemented(context),
-                                            color: Colors.pink,
-                                            child: Text("Follow"),
-                                            textColor: Colors.white)
+                                            child: Text("Follow"))
                                       ];
                                     } else {
                                       buttons = [
-                                        FlatButton(
+                                        RaisedButton(
+                                            onPressed: () =>
+                                                showNotImplemented(context),
+                                            child: Text("Message")),
+                                        OutlineButton(
                                           onPressed: () =>
                                               showNotImplemented(context),
-                                          color: Colors.pink,
-                                          child: Text("Message"),
-                                          textColor: Colors.white,
-                                        ),
-                                        OutlineButton(
-                                          onPressed: null,
                                           child: Icon(Icons.playlist_add_check),
-                                          color: Colors.black,
                                         )
                                       ];
                                     }
@@ -243,12 +239,17 @@ class _UserInfoState extends State<UserInfo>
                                   .sliverOverlapAbsorberHandleFor(context),
                               sliver: SliverAppBar(
                                   excludeHeaderSemantics: true,
-                                  backgroundColor: Colors.white,
+                                  backgroundColor:
+                                      Theme.of(context).scaffoldBackgroundColor,
                                   forceElevated: innerBoxIsScrolled,
                                   pinned: true,
+                                  automaticallyImplyLeading: false,
                                   title: TabBar(
                                     indicator: BoxDecoration(),
-                                    labelColor: Colors.black,
+                                    labelColor: Theme.of(context)
+                                        .textTheme
+                                        .headline1
+                                        .color,
                                     unselectedLabelColor: Colors.grey,
                                     tabs: [
                                       Tab(icon: Icon(Icons.list)),
@@ -291,20 +292,21 @@ class _UserInfoState extends State<UserInfo>
                                       GridFragment(
                                           stream: _authorVideos,
                                           count: authorInfo.stats.videoCount,
+                                          showUserInfo: false,
                                           heroTag: "userVideos"),
                                       GridFragment(
                                           stream: _authorFavoritedVideos,
                                           count: authorInfo.stats.diggCount,
                                           emptyMessage:
                                               "@${authorInfo.user.uniqueId} has hidden their liked videos.",
-                                          showUserInfo: false,
                                           heroTag: "likedVideos")
                                     ]));
                           } else {
                             // Otherwise, show loading
                             return Center(
                                 child: SpinKitFadingGrid(
-                              color: Colors.black,
+                              color:
+                                  Theme.of(context).textTheme.headline1.color,
                               size: 50,
                             ));
                           }
@@ -339,27 +341,5 @@ class _UserInfoState extends State<UserInfo>
     DefaultTabController.of(ctx).index = 0;
 
     return Future.value(false);
-  }
-
-  Future<void> _showLogOutDialog() async {
-    return showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => AlertDialog(
-        title: Text("Log Out?"),
-        content: Text(
-            "Are you sure you want to log out? After logging out, the app will reload."),
-        actions: [
-          FlatButton(
-            child: Text("Cancel"),
-            onPressed: () => Navigator.of(context).pop(),
-          ),
-          FlatButton(
-              child: Text("Log Out"),
-              onPressed: () =>
-                  API.logout().then((value) => Phoenix.rebirth(context)))
-        ],
-      ),
-    );
   }
 }

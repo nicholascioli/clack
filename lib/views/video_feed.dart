@@ -4,11 +4,13 @@ import 'package:clack/api/video_result.dart';
 import 'package:clack/views/discover.dart';
 import 'package:clack/views/notifications_view.dart';
 import 'package:clack/views/profile_view.dart';
+import 'package:clack/views/settings.dart';
 import 'package:clack/views/user_info.dart';
 import 'package:clack/views/video_page.dart';
 import 'package:extended_tabs/extended_tabs.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 /// Which page to show in the left page of the [VideoFeed]
 enum VideoFeedActivePage { VIDEO, SEARCH, NOTIFICATION, PROFILE }
@@ -100,8 +102,20 @@ class _VideoFeedState extends State<VideoFeed> {
 
   String _heroTag = "";
 
+  /// Needed for choosing video quality
+  SharedPreferences _prefs;
+
   /// The page to show on the left tab
   VideoFeedActivePage _activePage = VideoFeedActivePage.VIDEO;
+
+  @override
+  void initState() {
+    // Get the preferences
+    SharedPreferences.getInstance()
+        .then((value) => setState(() => _prefs = value));
+
+    super.initState();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -168,7 +182,7 @@ class _VideoFeedState extends State<VideoFeed> {
         itemBuilder: (context, i) {
           // Show loading symbol if we are awaiting API response
           final VideoResult v = _videos[i];
-          if (v == null) {
+          if (v == null || _prefs == null) {
             return Center(child: SpinKitWave(color: Colors.white, size: 50.0));
           } else {
             return VideoPage(
@@ -176,7 +190,9 @@ class _VideoFeedState extends State<VideoFeed> {
                 videoInfo: _videos[i],
                 index: i,
                 currentIndex: _currentIndex,
-                heroTag: _heroTag);
+                heroTag: _heroTag,
+                forceHd:
+                    _prefs.getBool(SettingsView.videoFullQualityKey) ?? false);
           }
         },
         onPageChanged: (page) {
@@ -197,7 +213,7 @@ class _VideoFeedState extends State<VideoFeed> {
           IconButton(
               iconSize: 30,
               padding: EdgeInsets.all(2),
-              icon: Icon(icon, color: Colors.white),
+              icon: Icon(icon, color: Theme.of(context).accentIconTheme.color),
               onPressed: () {
                 // Allow for switching between the states
                 print("PUSHED! Setting from $_activePage to $active");
@@ -226,7 +242,6 @@ class _VideoFeedState extends State<VideoFeed> {
         ]));
 
     return BottomAppBar(
-        color: Colors.transparent,
         elevation: 0,
         child: ButtonBar(
           alignment: MainAxisAlignment.spaceEvenly,

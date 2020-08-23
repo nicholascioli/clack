@@ -1,4 +1,5 @@
 import 'package:clack/api.dart';
+import 'package:clack/views/settings.dart';
 import 'package:clack/views/sign_in_webview.dart';
 import 'package:clack/views/user_info.dart';
 import 'package:clack/views/video_feed.dart';
@@ -13,9 +14,24 @@ class ProfileView extends StatefulWidget {
 }
 
 class _ProfileViewState extends State<ProfileView> {
+  List<Widget> _actions;
+
   @override
-  Widget build(BuildContext context) =>
-      API.isLoggedIn() ? UserInfo.currentUser() : _buildAnonymous();
+  void initState() {
+    // Set up actions
+    _actions = [
+      IconButton(
+          icon: Icon(Icons.settings),
+          onPressed: () => Navigator.pushNamed(context, SettingsView.routeName))
+    ];
+
+    super.initState();
+  }
+
+  @override
+  Widget build(BuildContext context) => API.isLoggedIn()
+      ? UserInfo.currentUser(parentActions: _actions)
+      : _buildAnonymous();
 
   Widget _buildAnonymous() => WillPopScope(
       onWillPop: () => _handleBack(),
@@ -26,6 +42,7 @@ class _ProfileViewState extends State<ProfileView> {
               onPressed: () => _handleBack(),
             ),
             title: Text("Profile"),
+            actions: _actions,
           ),
           body: Center(
             child: Column(
@@ -35,10 +52,8 @@ class _ProfileViewState extends State<ProfileView> {
                 SizedBox(height: 20),
                 Text("Sign up for an account"),
                 SizedBox(height: 20),
-                FlatButton(
+                RaisedButton(
                     child: Text("Sign up"),
-                    color: Colors.pink,
-                    textColor: Colors.white,
                     onPressed: () =>
                         Navigator.pushNamed(context, SignInWebview.routeName))
               ],

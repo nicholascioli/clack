@@ -31,10 +31,8 @@ class NotificationView extends StatelessWidget {
                 SizedBox(height: 20),
                 Text("Messages and notifications will appear here"),
                 SizedBox(height: 20),
-                FlatButton(
+                RaisedButton(
                     child: Text("Sign up"),
-                    color: Colors.pink,
-                    textColor: Colors.white,
                     onPressed: () => showNotImplemented(context))
               ],
             ),

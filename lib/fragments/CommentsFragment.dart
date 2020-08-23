@@ -10,17 +10,16 @@ import '../api.dart';
 class CommentsFragment extends StatefulWidget {
   final ApiStream<Comment> comments;
   final void Function() onClose;
+  final int initialCount;
 
-  CommentsFragment({@required this.comments, @required this.onClose});
+  CommentsFragment(
+      {@required this.comments, @required this.onClose, this.initialCount});
 
   @override
   _CommentsFragmentState createState() => _CommentsFragmentState();
 }
 
 class _CommentsFragmentState extends State<CommentsFragment> {
-  TextStyle _countStyle =
-      TextStyle(color: Colors.black, fontWeight: FontWeight.bold);
-
   @override
   void initState() {
     // Register handler for updating when comments arrive
@@ -31,6 +30,10 @@ class _CommentsFragmentState extends State<CommentsFragment> {
 
   @override
   Widget build(BuildContext context) {
+    TextStyle titleStyle = TextStyle(
+        color: Theme.of(context).textTheme.headline6.color,
+        fontWeight: FontWeight.bold);
+
     return SizedBox(
         height: MediaQuery.of(context).size.height * 0.7,
         child: DraggableScrollableSheet(
@@ -41,30 +44,29 @@ class _CommentsFragmentState extends State<CommentsFragment> {
                   leading: Container(),
 
                   // Blend in with modal, so white
-                  backgroundColor: Colors.white,
+                  backgroundColor: Theme.of(context).scaffoldBackgroundColor,
 
                   // Center title and make it black
                   centerTitle: true,
-                  title: (widget.comments[0] == null)
-                      ? null
-                      : Text("${widget.comments[0].totalCount} comments",
-                          style: _countStyle),
+                  title: Text(
+                      "${statToString(widget.comments[0] == null ? widget.initialCount : widget.comments[0].totalCount)} comments",
+                      style: titleStyle),
 
                   // Close modal button
                   actions: [
                     IconButton(
                       icon: Icon(Icons.close),
                       onPressed: widget.onClose,
-                      color: Colors.black,
+                      color: titleStyle.color,
                     )
                   ],
                 ),
                 body: (widget.comments[0] == null)
                     ? Container(
-                        color: Colors.white,
                         child: Center(
-                          child: SpinKitCubeGrid(color: Colors.black),
-                        ))
+                        child: SpinKitCubeGrid(
+                            color: Theme.of(context).textTheme.headline1.color),
+                      ))
                     : ListView.builder(
                         shrinkWrap: true,
                         controller: scrollController,
@@ -75,6 +77,7 @@ class _CommentsFragmentState extends State<CommentsFragment> {
   Widget _buildComment(int index) {
     Comment comment = widget.comments[index];
     TextStyle dateStyle = TextStyle(color: Colors.grey);
+    TextStyle boldStyle = TextStyle(fontWeight: FontWeight.bold);
     TextStyle viewMoreStyle =
         TextStyle(color: Colors.grey, fontWeight: FontWeight.bold);
 
@@ -95,7 +98,7 @@ class _CommentsFragmentState extends State<CommentsFragment> {
                     mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(comment.user.uniqueId, style: _countStyle),
+                      Text(comment.user.uniqueId, style: boldStyle),
                       SizedBox(height: 5),
                       RichText(
                           text: TextSpan(

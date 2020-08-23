@@ -24,6 +24,7 @@ class VideoPage extends StatefulWidget {
   final int index, currentIndex;
   final bool showUserPage;
   final String heroTag;
+  final bool forceHd;
 
   /// Construct a [VideoPage]
   ///
@@ -37,7 +38,8 @@ class VideoPage extends StatefulWidget {
       @required this.index,
       @required this.currentIndex,
       this.showUserPage = true,
-      this.heroTag})
+      this.heroTag,
+      this.forceHd = false})
       : super(key: key);
 
   @override
@@ -93,7 +95,7 @@ class _VideoPageState extends State<VideoPage> with TickerProviderStateMixin {
     ),
   ]);
 
-  // TODO: Implement a comment stream for fetching this video's comments
+  /// A stream of comments for this video
   ApiStream<Comment> _comments;
 
   @override
@@ -274,10 +276,11 @@ class _VideoPageState extends State<VideoPage> with TickerProviderStateMixin {
     // Show message if not logged in
     if (!API.isLoggedIn()) {
       Scaffold.of(context).showSnackBar(SnackBar(
-        backgroundColor: Colors.black,
+        backgroundColor: Theme.of(context).bottomAppBarColor,
         content: Text("You must sign in to like a video.",
-            style: TextStyle(color: Colors.white)),
+            style: TextStyle(color: Theme.of(context).accentIconTheme.color)),
         action: SnackBarAction(
+          textColor: Theme.of(context).accentColor,
           label: "Sign in",
           onPressed: () =>
               Navigator.pushNamed(context, SignInWebview.routeName),
@@ -396,7 +399,9 @@ class _VideoPageState extends State<VideoPage> with TickerProviderStateMixin {
 
     // Make a new one using the VideoResult
     var oldController = _controller;
-    _controller = VideoPlayerController.network(vid.video.playAddr.toString());
+    _controller = VideoPlayerController.network(widget.forceHd
+        ? widget.videoInfo.video.downloadAddr.toString()
+        : widget.videoInfo.video.playAddr.toString());
     oldController?.pause()?.then((value) => oldController.dispose());
 
     // Initialize the video so that it may start playing
@@ -412,8 +417,9 @@ class _VideoPageState extends State<VideoPage> with TickerProviderStateMixin {
       Scaffold.of(context).showSnackBar(SnackBar(
         backgroundColor: Colors.black,
         content: Text("You must sign in to view comments.",
-            style: TextStyle(color: Colors.white)),
+            style: TextStyle(color: Theme.of(context).accentIconTheme.color)),
         action: SnackBarAction(
+          textColor: Theme.of(context).accentColor,
           label: "Sign in",
           onPressed: () =>
               Navigator.pushNamed(context, SignInWebview.routeName),
@@ -427,6 +433,8 @@ class _VideoPageState extends State<VideoPage> with TickerProviderStateMixin {
         context: Scaffold.of(context).context,
         isScrollControlled: true,
         builder: (ctx) => CommentsFragment(
-            comments: _comments, onClose: () => Navigator.pop(ctx)));
+            comments: _comments,
+            onClose: () => Navigator.pop(ctx),
+            initialCount: widget.videoInfo.stats.commentCount));
   }
 }

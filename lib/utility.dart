@@ -1,5 +1,7 @@
 import 'package:clack/api/video_result.dart';
+import 'package:clack/views/settings.dart';
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:tuple/tuple.dart';
 
 import 'api/author_result.dart';
@@ -50,3 +52,45 @@ void showNotImplemented(BuildContext context) => showDialog(
         content: Text("This feature will (maybe) be added at a later date."),
       ),
     );
+
+ThemeData createTheme(
+        {BuildContext context,
+        Brightness brightness,
+        Color primaryColor,
+        Color bottomBarColor,
+        Color iconColor}) =>
+    new ThemeData(
+        accentColor: primaryColor ?? Theme.of(context).accentColor,
+        appBarTheme: new AppBarTheme(
+            color: primaryColor ?? Theme.of(context).accentColor),
+        bottomAppBarColor:
+            bottomBarColor ?? Theme.of(context).bottomAppBarColor,
+        buttonColor: primaryColor ?? Theme.of(context).accentColor,
+        buttonTheme: new ButtonThemeData(
+            buttonColor: primaryColor ?? Theme.of(context).accentColor,
+            textTheme: ButtonTextTheme.primary),
+        brightness: brightness ?? Theme.of(context).brightness,
+        toggleableActiveColor: primaryColor ?? Theme.of(context).accentColor,
+        accentIconTheme: new IconThemeData(
+            color: iconColor ?? Theme.of(context).accentIconTheme.color));
+
+Color valueToColor(int value) {
+  // Return nothing if not valid
+  if (value == null) return null;
+
+  return Color(value);
+}
+
+Color getThemeColor(SharedPreferences prefs, String key) {
+  if (key == SettingsView.themePrimaryColor)
+    return valueToColor(prefs.getInt(SettingsView.themePrimaryColor)) ??
+        Colors.pink;
+  else if (key == SettingsView.themeBottomBarColor)
+    return valueToColor(prefs.getInt(SettingsView.themeBottomBarColor)) ??
+        Colors.black;
+  else if (key == SettingsView.themeIconColor)
+    return valueToColor(prefs.getInt(SettingsView.themeIconColor)) ??
+        Colors.white;
+  else
+    throw ("Invalid theme color: $key");
+}

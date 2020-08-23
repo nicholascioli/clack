@@ -57,7 +57,8 @@ class _DiscoverState extends State<Discover> {
           ),
           body: _hashtags[0] == null
               ? Center(
-                  child: SpinKitFadingGrid(color: Colors.black),
+                  child: SpinKitFadingGrid(
+                      color: Theme.of(context).textTheme.headline1.color),
                 )
               : CustomScrollView(
                   slivers: [
@@ -106,11 +107,11 @@ class _DiscoverState extends State<Discover> {
                     ClipRRect(
                         borderRadius: BorderRadius.circular(5),
                         child: Container(
-                            color: Color.fromARGB(255, 210, 210, 210),
+                            color: Colors.blueGrey,
                             child: Padding(
                                 padding: EdgeInsets.all(5),
-                                child:
-                                    Text(statToString(ht.stats.videoCount))))),
+                                child: Text(statToString(ht.stats.videoCount),
+                                    style: TextStyle(color: Colors.white))))),
                   ])),
 
               // Show the list of videos
