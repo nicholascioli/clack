@@ -7,6 +7,7 @@ import 'package:clack/api/author_result.dart';
 import 'package:clack/api/hashtag_result.dart';
 import 'package:clack/api/music_result.dart';
 import 'package:clack/api/video_result.dart';
+import 'package:clack/utility.dart';
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
@@ -272,7 +273,7 @@ class API {
 
     String url = _getFormattedUrl("api/commit/item/digg", {
       "aid": 1988,
-      "aweme_id": video.id,
+      "aweme_id": getVideoId(video),
       "uid": _userInfo.user.id,
       "did": _webId,
       "device_id": _webId,
@@ -398,7 +399,7 @@ class API {
               "cookie_enabled": true,
               "did": _webId,
               "uid": _userInfo.user.id,
-              "aweme_id": video.id,
+              "aweme_id": getVideoId(video),
               "cursor": maxCursor,
               "count": count,
               "verifyFp": ""

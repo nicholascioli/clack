@@ -37,7 +37,7 @@ String getAuthorShare(AuthorResult authorResult) =>
 
 /// Gets a string containing shareable info about a [video]
 String getVideoShare(VideoResult video) =>
-    "Check out @${video.author.uniqueId}'s video! \n${video.desc}\n\nhttps://www.tiktok.com/@${video.author.uniqueId}/video/${video.id}";
+    "Check out @${video.author.uniqueId}'s video! \n${video.desc}\n\nhttps://www.tiktok.com/@${video.author.uniqueId}/video/${getVideoId(video)}";
 
 // TODO: This needs work, as TT converts the title using more complex rules
 /// Gets a string containing shareable info about a [music] track
@@ -94,3 +94,10 @@ Color getThemeColor(SharedPreferences prefs, String key) {
   else
     throw ("Invalid theme color: $key");
 }
+
+/// Gets the ID from a [videoResult]
+///
+/// Note: This is necessary because some videos have two separate
+/// IDs, with the nested ID being the correct ID to use for all requests
+String getVideoId(VideoResult videoResult) =>
+    videoResult.video.id != "awesome" ? videoResult.video.id : videoResult.id;
