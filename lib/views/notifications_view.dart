@@ -1,3 +1,4 @@
+import 'package:clack/api.dart';
 import 'package:clack/utility.dart';
 import 'package:clack/views/video_feed.dart';
 import 'package:flutter/material.dart';
@@ -30,10 +31,15 @@ class NotificationView extends StatelessWidget {
                 Icon(Icons.notifications_none, size: 80, color: Colors.grey),
                 SizedBox(height: 20),
                 Text("Messages and notifications will appear here"),
-                SizedBox(height: 20),
-                RaisedButton(
-                    child: Text("Sign in"),
-                    onPressed: () => showNotImplemented(context))
+
+                // Only show the log in button when not logged in
+                API.isLoggedIn()
+                    ? Container()
+                    : Padding(
+                        padding: EdgeInsets.only(top: 20),
+                        child: RaisedButton(
+                            child: Text("Sign in"),
+                            onPressed: () => showNotImplemented(context)))
               ],
             ),
           ),

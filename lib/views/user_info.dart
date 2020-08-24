@@ -345,8 +345,9 @@ class _UserInfoState extends State<UserInfo>
                                   GridFragment(
                                       stream: _authorFavoritedVideos,
                                       count: result.stats.diggCount,
-                                      emptyMessage:
-                                          "@${result.user.uniqueId} has hidden their liked videos.",
+                                      emptyMessage: widget.args.isCurrentUser
+                                          ? "Liked videos will show up here."
+                                          : "@${result.user.uniqueId} has hidden their liked videos.",
                                       heroTag: "likedVideos")
                                 ])));
                   } else {
