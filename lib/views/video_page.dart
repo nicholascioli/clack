@@ -149,6 +149,9 @@ class _VideoPageState extends State<VideoPage> with TickerProviderStateMixin {
   Widget build(BuildContext context) {
     return Scaffold(
       body: _buildPage(),
+      // We do not want the video to shift when opening the keyboard
+      // e.g. when writing a comment
+      resizeToAvoidBottomInset: false,
       backgroundColor: Colors.black,
     );
   }
@@ -439,6 +442,7 @@ class _VideoPageState extends State<VideoPage> with TickerProviderStateMixin {
         builder: (ctx) => CommentsFragment(
             comments: _comments,
             onClose: () => Navigator.pop(ctx),
+            owner: widget.videoInfo,
             initialCount: widget.videoInfo.stats.commentCount));
   }
 }

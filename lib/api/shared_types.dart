@@ -312,8 +312,14 @@ class Comment {
             secUid: user["sec_uid"]),
         replyId: json["reply_id"],
         userDigged: json["user_digged"] == 1,
-        replyComment: null, // TODO: Figure out what this is...
-        replyCommentTotal: json["reply_comment_total"],
+        replyComment:
+            json.containsKey("reply_comment") && json["reply_comment"] != null
+                ? Comment.fromJson(json["reply_comment"][0], 1)
+                : null,
+        // This is optional for replies (sub-comments)
+        replyCommentTotal: json.containsKey("reply_comment_total")
+            ? json["reply_comment_total"]
+            : 0,
         isAuthorDigged: json["is_author_digged"] == 1,
         userBuried: json["user_buried"] == 1,
         totalCount: totalCount);

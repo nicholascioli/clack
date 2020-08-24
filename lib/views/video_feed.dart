@@ -148,10 +148,11 @@ class _VideoFeedState extends State<VideoFeed> {
         child: ExtendedTabBarView(children: [
           _buildVideoWithBar(),
           UserInfo(
-            () => _videos[_currentIndex].author,
+              args: UserInfoArgs(
+            authorGetter: () => _videos[_currentIndex].author,
             onBack: (ctx) =>
                 Future.value(DefaultTabController.of(ctx).index = 0),
-          )
+          ))
         ]),
       );
 
@@ -173,6 +174,7 @@ class _VideoFeedState extends State<VideoFeed> {
         extendBodyBehindAppBar: true,
         backgroundColor: Colors.black,
         bottomNavigationBar: !_isNested ? _buildBottomBar() : null,
+        resizeToAvoidBottomInset: _activePage != VideoFeedActivePage.VIDEO,
         body: views[_activePage]());
   }
 

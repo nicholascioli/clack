@@ -49,9 +49,10 @@ class ApiStream<T> {
   int count = 0;
   Future<ApiResult<T>> Function(int count, int maxCursor) _stream;
 
-  // Used for checking if we can fetch more
+  // Used for checking if we can (and should) fetch more
   bool isFetching = false;
   bool hasMore = true;
+  bool autoFetch = true;
 
   // Internal list used for caching network results
   List<T> _results;
@@ -78,7 +79,9 @@ class ApiStream<T> {
   //   the count is defined as the bounds for fetching)
   T operator [](int i) {
     // If we see that we need more, fetch in the background
-    if (hasMore && i >= _results.length - max(1, (count * 0.2).floor()))
+    if (hasMore &&
+        autoFetch &&
+        i >= _results.length - max(1, (count * 0.2).floor()))
       _next().then((value) {
         print("API STREAM FETCHED: $value");
 
@@ -93,6 +96,24 @@ class ApiStream<T> {
 
     // Just in case we took too long and forgot to fetch, we return null
     return i >= _results.length ? null : _results[i];
+  }
+
+  /// Fetch the next set of results in the background
+  Future<void> fetch() async {
+    if (hasMore) {
+      Iterable<T> results = await _next();
+      print("API STREAM FETCHED: $results");
+
+      // Do nothing if we get nothing
+      if (results.isEmpty) return;
+
+      _results.addAll(results);
+
+      // Update listener
+      this._cb();
+
+      return Future.value();
+    }
   }
 
   /// Returns the length of the stream in its current form.
@@ -386,8 +407,6 @@ class API {
         return _getVideos(url, count, cursor);
       });
 
-  /// NOT IMPLEMENTED
-  ///
   /// Get an [ApiStream]<[Comment]> of a [video]'s comments.
   static ApiStream<Comment> getVideoCommentStream(
           VideoResult video, int count) =>
@@ -406,8 +425,27 @@ class API {
             },
             useMobile: false);
 
-        return _getCommentsForVideo(url, count, maxCursor);
-        // https://www.tiktok.com/api/comment/list/?aid=1988&cookie_enabled=trueappId=1233&did=6863727533905806854&uid=6609695707618492422&aweme_id=6857366494456712454&cursor=0&count=20&verifyFp=&_signature=_02B4Z6wo00f01Do7o4QAAIBACBsS33KIX3g6OqcAAFHT20
+        return _getCommentsOrReplies(url, count, maxCursor);
+      });
+
+  static ApiStream<Comment> getCommentReplyStream(Comment comment, int count) =>
+      ApiStream(count, (count, maxCursor) {
+        String url = _getFormattedUrl(
+            "api/comment/list/reply",
+            {
+              "aid": 1988,
+              "cookie_enabled": true,
+              "did": _webId,
+              "uid": _userInfo.user.id,
+              "comment_id": comment.cid,
+              "item_id": comment.awemeId,
+              "cursor": maxCursor,
+              "count": count,
+              "verifyFp": "",
+            },
+            useMobile: false);
+
+        return _getCommentsOrReplies(url, count, maxCursor);
       });
 
   static ApiStream<MusicResult> getVideosForMusic(Music m, int count) =>
@@ -509,7 +547,7 @@ class API {
         hasMore, maxCursor, array.map((e) => VideoResult.fromJson(e)));
   }
 
-  static Future<ApiResult<Comment>> _getCommentsForVideo(
+  static Future<ApiResult<Comment>> _getCommentsOrReplies(
       String url, int count, int cursor) async {
     dynamic asJson = await _fetchResults(url);
     List<dynamic> array = asJson["comments"];

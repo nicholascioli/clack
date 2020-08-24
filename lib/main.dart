@@ -4,6 +4,7 @@ import 'package:clack/views/full_image.dart';
 import 'package:clack/views/settings.dart';
 import 'package:clack/views/sign_in_webview.dart';
 import 'package:clack/views/sound_group.dart';
+import 'package:clack/views/user_info.dart';
 import 'package:dynamic_theme/dynamic_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -54,7 +55,8 @@ class MyApp extends StatelessWidget {
               FullImage.routeName: (ctx) => FullImage(),
               SoundGroup.routeName: (ctx) => SoundGroup(),
               SignInWebview.routeName: (ctx) => SignInWebview(),
-              SettingsView.routeName: (ctx) => SettingsView()
+              SettingsView.routeName: (ctx) => SettingsView(),
+              UserInfo.routeName: (ctx) => UserInfo.fromNamed(ctx)
             },
             theme: theme));
   }

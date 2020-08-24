@@ -2,6 +2,7 @@ import 'package:clack/api.dart';
 import 'package:clack/api/video_result.dart';
 import 'package:clack/views/video_feed.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:icon_shadow/icon_shadow.dart';
 import 'package:transparent_image/transparent_image.dart';
 
@@ -34,6 +35,15 @@ class GridFragment extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Show loading if waiting on stream
+    if (stream.length == 0 && stream.hasMore) {
+      return Center(
+          child: SpinKitFadingGrid(
+        color: Theme.of(context).textTheme.headline1.color,
+        size: 50,
+      ));
+    }
+
     // If we have nothing to show, show the empty message
     if ((count != null && count < 1) ||
         (stream.length == 0 && stream.hasMore == false))
