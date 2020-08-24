@@ -5,6 +5,7 @@ import 'package:clack/views/full_image.dart';
 import 'package:clack/api/shared_types.dart';
 import 'package:clack/utility.dart';
 import 'package:clack/api/video_result.dart';
+import 'package:clack/views/settings.dart';
 import 'package:clack/views/video_feed.dart';
 import 'package:extended_tabs/extended_tabs.dart';
 import 'package:flutter/cupertino.dart';
@@ -12,6 +13,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:share/share.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class UserInfoArgs {
   final Author Function() authorGetter;
@@ -86,6 +88,9 @@ class _UserInfoState extends State<UserInfo>
   /// Prepends actions from [widget.parentActions]
   List<Widget> _actions;
 
+  /// The preferences for this app
+  SharedPreferences _prefs;
+
   @override
   void initState() {
     super.initState();
@@ -101,11 +106,17 @@ class _UserInfoState extends State<UserInfo>
       _actions.add(IconButton(
           icon: Icon(Icons.share),
           onPressed: () => _authorResult.then((authorResult) {
-                Share.share(getAuthorShare(authorResult),
+                Share.share(
+                    getAuthorShare(authorResult,
+                        _prefs.getBool(SettingsView.sharingShowInfo)),
                     subject:
                         "Check out @${authorResult.user.uniqueId} TikTok!");
               })));
     }
+
+    // Get the prefs
+    SharedPreferences.getInstance()
+        .then((value) => setState(() => _prefs = value));
   }
 
   @override

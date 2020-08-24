@@ -6,10 +6,12 @@ import 'package:clack/api/music_result.dart';
 import 'package:clack/api/video_result.dart';
 import 'package:clack/fragments/GridFragment.dart';
 import 'package:clack/utility.dart';
+import 'package:clack/views/settings.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:icon_shadow/icon_shadow.dart';
 import 'package:share/share.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class SoundGroupArguments {
   final ApiStream<MusicResult> stream;
@@ -33,6 +35,8 @@ class _SoundGroupState extends State<SoundGroup> {
   ApiStream<VideoResult> _videos;
   bool _hasInit = false;
 
+  SharedPreferences _prefs;
+
   @override
   void dispose() {
     // Stop the player
@@ -48,6 +52,10 @@ class _SoundGroupState extends State<SoundGroup> {
     // Update the UI when player changes state
     _updateSubscription =
         _player.onPlayerStateChanged.listen((event) => setState(() {}));
+
+    // Get access to the shared preferences
+    SharedPreferences.getInstance()
+        .then((value) => setState(() => _prefs = value));
 
     // Continue init
     super.initState();
@@ -77,9 +85,10 @@ class _SoundGroupState extends State<SoundGroup> {
             actions: [
               IconButton(
                   icon: Icon(Icons.share),
-                  onPressed: () => _videos[0] == null
+                  onPressed: () => _videos[0] == null || _prefs == null
                       ? {}
-                      : Share.share(getMusicShare(_videos[0].music)))
+                      : Share.share(getMusicShare(_videos[0].music,
+                          _prefs.getBool(SettingsView.sharingShowInfo))))
             ],
             title: Text(_videos[0] == null
                 ? ""

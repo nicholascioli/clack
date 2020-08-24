@@ -23,9 +23,25 @@ void main() async {
   // Initialize the API
   await API.init();
 
+  // Set app defaults
+  SharedPreferences prefs = await SharedPreferences.getInstance();
+  void Function(
+          String key, dynamic value, Future Function(String, dynamic) method)
+      initPref = (key, value, method) {
+    if (!prefs.containsKey(key)) {
+      method(key, value);
+    }
+  };
+  var setBool = (String key, dynamic value) => prefs.setBool(key, value);
+  var setString = (String key, dynamic value) => prefs.setString(key, value);
+  // var setInt = (String key, dynamic value) => prefs.setInt(key, value);
+
+  initPref(SettingsView.videoFullQualityKey, false, setBool);
+  initPref(SettingsView.sharingShowInfo, true, setBool);
+  initPref(SettingsView.advancedUserAgentKey, API.USER_AGENT, setString);
+
   // Run the app
-  return runApp(
-      Phoenix(child: MyApp(prefs: await SharedPreferences.getInstance())));
+  return runApp(Phoenix(child: MyApp(prefs: prefs)));
 }
 
 class MyApp extends StatelessWidget {

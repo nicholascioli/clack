@@ -32,17 +32,24 @@ String statToString(int stat) {
 }
 
 /// Gets a string containing shareable info about an [authorResult]
-String getAuthorShare(AuthorResult authorResult) =>
-    "${authorResult.shareMeta.title} \n${authorResult.shareMeta.desc} \n\nhttps://tiktok.com/@${authorResult.user.uniqueId}";
+String getAuthorShare(AuthorResult authorResult, bool showInfo) =>
+    (showInfo
+        ? "${authorResult.shareMeta.title} \n${authorResult.shareMeta.desc} \n\n"
+        : "") +
+    "https://tiktok.com/@${authorResult.user.uniqueId}";
 
 /// Gets a string containing shareable info about a [video]
-String getVideoShare(VideoResult video) =>
-    "Check out @${video.author.uniqueId}'s video! \n${video.desc}\n\nhttps://www.tiktok.com/@${video.author.uniqueId}/video/${getVideoId(video)}";
+String getVideoShare(VideoResult video, bool showInfo) =>
+    (showInfo
+        ? "Check out @${video.author.uniqueId}'s video! \n${video.desc}\n\n"
+        : "") +
+    "https://www.tiktok.com/@${video.author.uniqueId}/video/${getVideoId(video)}";
 
 // TODO: This needs work, as TT converts the title using more complex rules
 /// Gets a string containing shareable info about a [music] track
-String getMusicShare(Music music) =>
-    "Check out videos with the song '${music.title}'!\n\nhttps://www.tiktok.com/music/${music.title.replaceAll(' ', '-').replaceAll(new RegExp(r"[\(\),?!.]"), '')}-${music.id}";
+String getMusicShare(Music music, bool showInfo) =>
+    (showInfo ? "Check out videos with the song '${music.title}'!\n\n" : "") +
+    "https://www.tiktok.com/music/${music.title.replaceAll(' ', '-').replaceAll(new RegExp(r"[\(\),?!.]"), '')}-${music.id}";
 
 /// Shows a dialog with the text 'NOT IMPLEMENTED'
 void showNotImplemented(BuildContext context) => showDialog(

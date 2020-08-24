@@ -3,6 +3,7 @@ import 'package:clack/api/shared_types.dart';
 import 'package:clack/fragments/CommentsFragment.dart';
 import 'package:clack/utility.dart';
 import 'package:clack/api/video_result.dart';
+import 'package:clack/views/settings.dart';
 import 'package:clack/views/sign_in_webview.dart';
 import 'package:clack/views/sound_group.dart';
 import 'package:flutter/material.dart';
@@ -10,6 +11,7 @@ import 'package:icon_shadow/icon_shadow.dart';
 import 'package:like_button/like_button.dart';
 import 'package:marquee/marquee.dart';
 import 'package:share/share.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:video_player/video_player.dart';
 import 'package:wakelock/wakelock.dart';
 
@@ -98,6 +100,9 @@ class _VideoPageState extends State<VideoPage> with TickerProviderStateMixin {
   /// A stream of comments for this video
   ApiStream<Comment> _comments;
 
+  /// Shared preferences for the app
+  SharedPreferences _prefs;
+
   @override
   void initState() {
     super.initState();
@@ -124,6 +129,10 @@ class _VideoPageState extends State<VideoPage> with TickerProviderStateMixin {
 
     // Get the comment stream ready
     _comments = API.getVideoCommentStream(widget.videoInfo, 20);
+
+    // Get the prefs
+    SharedPreferences.getInstance()
+        .then((value) => setState(() => _prefs = value));
   }
 
   @override
@@ -361,7 +370,8 @@ class _VideoPageState extends State<VideoPage> with TickerProviderStateMixin {
                   icon: IconShadowWidget(
                       Icon(Icons.share, size: _iconSize, color: Colors.white),
                       shadowColor: Colors.black),
-                  onPressed: () => Share.share(getVideoShare(widget.videoInfo)),
+                  onPressed: () => Share.share(getVideoShare(widget.videoInfo,
+                      _prefs.getBool(SettingsView.sharingShowInfo))),
                 ),
                 Text(statToString(widget.videoInfo.stats.shareCount),
                     textAlign: TextAlign.center, style: subTextStyle),

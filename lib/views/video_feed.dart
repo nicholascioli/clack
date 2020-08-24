@@ -197,8 +197,7 @@ class _VideoFeedState extends State<VideoFeed> {
                 index: i,
                 currentIndex: _currentIndex,
                 heroTag: _heroTag,
-                forceHd:
-                    _prefs.getBool(SettingsView.videoFullQualityKey) ?? false);
+                forceHd: _prefs.getBool(SettingsView.videoFullQualityKey));
           }
         },
         onPageChanged: (page) {

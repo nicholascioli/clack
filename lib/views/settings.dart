@@ -15,6 +15,7 @@ class SettingsView extends StatefulWidget {
 
   // Keys for the preferences
   static final String videoFullQualityKey = "VIDEO_FULL_QUALITY";
+  static final String sharingShowInfo = "SHARING_SHOW_INFO";
   static final String themePrimaryColor = "THEME_PRIMARY_COLOR";
   static final String themeBottomBarColor = "THEME_BOTTOM_BAR_COLOR";
   static final String themeIconColor = "THEME_ICON_COLOR";
@@ -67,9 +68,23 @@ class _SettingsViewState extends State<SettingsView> {
                           .setBool(SettingsView.videoFullQualityKey, value)
                           .then((_) => setState(() {})),
                       switchValue:
-                          _prefs.getBool(SettingsView.videoFullQualityKey) ??
-                              false,
+                          _prefs.getBool(SettingsView.videoFullQualityKey),
                     )
+                  ],
+                ),
+                SettingsSection(
+                  title: "Sharing",
+                  tiles: [
+                    SettingsTile.switchTile(
+                        leading: Icon(Icons.share),
+                        title: "Share info",
+                        subtitle:
+                            "Share links with relevant info. Disable to only share the link itself.",
+                        onToggle: (value) => _prefs
+                            .setBool(SettingsView.sharingShowInfo, value)
+                            .then((_) => setState(() {})),
+                        switchValue:
+                            _prefs.getBool(SettingsView.sharingShowInfo))
                   ],
                 ),
                 SettingsSection(
@@ -144,8 +159,7 @@ class _SettingsViewState extends State<SettingsView> {
                     SettingsTile(
                       title: "User Agent",
                       subtitle:
-                          _prefs.getString(SettingsView.advancedUserAgentKey) ??
-                              API.USER_AGENT,
+                          _prefs.getString(SettingsView.advancedUserAgentKey),
                       leading: Icon(Icons.public),
                       onTap: () => _showTextDialog(
                               "User Agent",
