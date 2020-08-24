@@ -83,6 +83,7 @@ class _UserInfoState extends State<UserInfo>
   ApiStream<VideoResult> _authorVideos;
   ApiStream<VideoResult> _authorFavoritedVideos;
   bool _hasInit = false;
+  bool _isFollowing = false;
 
   /// The actions to show in the appbar.
   ///
@@ -99,6 +100,7 @@ class _UserInfoState extends State<UserInfo>
     // Fetch the author's info from the API
     _sparseAuthor = widget.args.authorGetter();
     _authorResult = API.getAuthorInfo(_sparseAuthor);
+    _authorResult.then((value) => _isFollowing = (value.user.relation == 1));
 
     // Change the AppBar's actions when viewing the current user
     _actions =
@@ -241,34 +243,46 @@ class _UserInfoState extends State<UserInfo>
                                   ],
                                 ),
 
-                                // Optional biolink
-
-                                SizedBox(height: 10),
-                                Visibility(
-                                    child: ButtonBar(
-                                        alignment: MainAxisAlignment.center,
-                                        children: [
-                                          RaisedButton(
-                                              onPressed: () =>
-                                                  showNotImplemented(context),
-                                              child: Text("Message")),
-                                          OutlineButton(
-                                            onPressed: () =>
-                                                showNotImplemented(context),
-                                            child:
-                                                Icon(Icons.playlist_add_check),
-                                          )
-                                        ]),
-                                    replacement: ButtonBar(
-                                      alignment: MainAxisAlignment.center,
-                                      children: [
-                                        RaisedButton(
-                                            onPressed: () =>
-                                                showNotImplemented(context),
-                                            child: Text("Follow")),
-                                      ],
-                                    ),
-                                    visible: result.user.relation == 1),
+                                // Social buttons
+                                !widget.args.isCurrentUser && API.isLoggedIn()
+                                    ? Padding(
+                                        padding: EdgeInsets.only(top: 10),
+                                        child: Visibility(
+                                            child: ButtonBar(
+                                                alignment:
+                                                    MainAxisAlignment.center,
+                                                children: [
+                                                  RaisedButton(
+                                                      onPressed: () =>
+                                                          showNotImplemented(
+                                                              context),
+                                                      child: Text("Message")),
+                                                  OutlineButton(
+                                                    onPressed: () =>
+                                                        showNotImplemented(
+                                                            context),
+                                                    child: Icon(Icons
+                                                        .playlist_add_check),
+                                                  )
+                                                ]),
+                                            replacement: ButtonBar(
+                                              alignment:
+                                                  MainAxisAlignment.center,
+                                              children: [
+                                                RaisedButton(
+                                                    onPressed: () => API
+                                                        .followAuther(
+                                                            result.user,
+                                                            !_isFollowing)
+                                                        .then((value) =>
+                                                            setState(() =>
+                                                                _isFollowing =
+                                                                    value)),
+                                                    child: Text("Follow")),
+                                              ],
+                                            ),
+                                            visible: _isFollowing))
+                                    : Container(),
 
                                 // The author's optional signature
                                 result.user.signature.isNotEmpty

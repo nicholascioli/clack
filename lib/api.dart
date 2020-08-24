@@ -302,38 +302,30 @@ class API {
       "cookie_enabled": true,
       "type": shouldLike ? 1 : 0, // 1 for enable, 0 for disable
     });
-    // https://m.tiktok.com/api/commit/item/digg/?aid=1988&cookie_enabled=true&appId=1233&did=6863171026114332166&uid=6609695707618492422&device_id=6863171026114332166&aweme_id=6861656038039391494&type=1&verifyFp=
 
-    // Sign the url using TT JS
-    // Note: We construct a headless webview first and then dispose of
-    //   it after we finish generating the code
-    await _webView.run();
-    String code = await sign(url);
-    String signedUrl = "$url&_signature=$code";
-    await _webView.dispose();
-    print("GOT URL: $signedUrl");
-
-    // Make a request for the videos
-    //   Note: We attach the login cookie if available
-    var response = await http.post(signedUrl,
-        headers: {
-          "User-Agent": USER_AGENT,
-          "cookie": _loginToken != null
-              ? "sid_guard=${_loginToken.value.toString()}"
-              : "",
-          "Accept": "application/json, text/plain, */*",
-          "Content-Type": "application/x-www-form-urlencoded",
-          "DNT": "1",
-          "Origin": "https://www.tiktok.com",
-          "Referer": "https://www.tiktok.com/"
-        },
-        body: "");
-
-    // If we failed to like, let caller know
-    if (response.statusCode != 200) return Future.value(false);
-
-    Map<String, dynamic> asJson = json.decode(response.body);
+    dynamic asJson = await _fetchResults(url, shouldPost: true);
     return Future.value(asJson.containsKey("is_digg") && shouldLike);
+  }
+
+  /// Set the following status of an [author] to [shouldFollow]
+  static Future<bool> followAuther(Author author, bool shouldFollow) async {
+    // Do nothing if not logged in
+    if (!API.isLoggedIn()) return Future.value(false);
+
+    String url = _getFormattedUrl("api/commit/follow/user", {
+      "aid": 1988,
+      "user_id": author.id,
+      "uid": _userInfo.user.id,
+      "did": _webId,
+      "device_id": _webId,
+      "verifyFp": "",
+      "cookie_enabled": true,
+      "type": shouldFollow ? 1 : 0, // 1 for enable, 0 for disable
+    });
+
+    dynamic asJson = await _fetchResults(url, shouldPost: true);
+    print("GOT RES: $asJson");
+    return Future.value(asJson.containsKey("follow_status") && shouldFollow);
   }
 
   /// Get an [author]'s extended info.
@@ -590,7 +582,8 @@ class API {
   // }
 
   /// Fetches data from a TT endpoint
-  static Future<dynamic> _fetchResults(String url) async {
+  static Future<dynamic> _fetchResults(String url,
+      {bool shouldPost = false}) async {
     // Sign the url using TT JS
     // Note: We construct a headless webview first and then dispose of
     //   it after we finish generating the code
@@ -600,9 +593,12 @@ class API {
     await _webView.dispose();
     print("GOT URL: $signedUrl");
 
+    // Select the method
+    var method = shouldPost ? http.post : http.get;
+
     // Make a request for the videos
     //   Note: We attach the login cookie if available
-    var response = await http.get(signedUrl, headers: {
+    var response = await method(signedUrl, headers: {
       "User-Agent": USER_AGENT,
       "cookie": _loginToken != null
           ? "sid_guard=${_loginToken.value.toString()}"
