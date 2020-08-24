@@ -43,6 +43,12 @@ class Author {
   /// Note: 1 means following, 0 means nothing
   final int relation;
 
+  /// A link to this author's bio
+  ///
+  /// WARNING: This links through TT's servers. They _will_ track you
+  /// using this link.
+  final Uri bioLink;
+
   Author(
       {this.id,
       this.secUid,
@@ -54,7 +60,8 @@ class Author {
       this.signature,
       this.openFavorite,
       this.verified,
-      this.relation});
+      this.relation,
+      this.bioLink});
 
   /// Construct an [Author] from a supplied [json] object.
   ///
@@ -71,7 +78,10 @@ class Author {
         signature: json["signature"],
         openFavorite: json["openFavorite"],
         verified: json["verified"],
-        relation: json["relation"]);
+        relation: json["relation"],
+        bioLink: json.containsKey("bioLink")
+            ? Uri.parse(json["bioLink"]["link"])
+            : null);
   }
 }
 

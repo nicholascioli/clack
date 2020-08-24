@@ -14,6 +14,7 @@ import 'package:flutter/rendering.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:share/share.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class UserInfoArgs {
   final Author Function() authorGetter;
@@ -191,6 +192,8 @@ class _UserInfoState extends State<UserInfo>
                                                   ))))),
                                   Spacer()
                                 ]),
+
+                                // Optional verified text
                                 (result.user.verified
                                     ? Row(children: [
                                         Spacer(),
@@ -208,6 +211,8 @@ class _UserInfoState extends State<UserInfo>
                                         Spacer()
                                       ])
                                     : Container()),
+
+                                // The username
                                 SizedBox(height: 10),
                                 Row(
                                   mainAxisAlignment: MainAxisAlignment.center,
@@ -216,6 +221,8 @@ class _UserInfoState extends State<UserInfo>
                                         style: userTextStyle)
                                   ],
                                 ),
+
+                                // Social interaction buttons
                                 SizedBox(height: 15),
                                 Row(
                                   mainAxisAlignment:
@@ -233,60 +240,64 @@ class _UserInfoState extends State<UserInfo>
                                         result, result.stats.heart, "Hearts")
                                   ],
                                 ),
+
+                                // Optional biolink
+
                                 SizedBox(height: 10),
-                                FutureBuilder(
-                                    future: _authorResult,
-                                    builder: (context,
-                                        AsyncSnapshot<AuthorResult> snapshot) {
-                                      // Don't show follow buttons if current user
-                                      if (widget.args.isCurrentUser)
-                                        return Container();
-
-                                      if (snapshot.connectionState ==
-                                              ConnectionState.done &&
-                                          snapshot.hasData) {
-                                        List<Widget> buttons;
-
-                                        // If we aren't following, offer to follow
-                                        if (snapshot.data.user.relation == 0) {
-                                          buttons = [
-                                            RaisedButton(
-                                                onPressed: () =>
-                                                    showNotImplemented(context),
-                                                child: Text("Follow"))
-                                          ];
-                                        } else {
-                                          buttons = [
-                                            RaisedButton(
-                                                onPressed: () =>
-                                                    showNotImplemented(context),
-                                                child: Text("Message")),
-                                            OutlineButton(
+                                Visibility(
+                                    child: ButtonBar(
+                                        alignment: MainAxisAlignment.center,
+                                        children: [
+                                          RaisedButton(
                                               onPressed: () =>
                                                   showNotImplemented(context),
-                                              child: Icon(
-                                                  Icons.playlist_add_check),
-                                            )
-                                          ];
-                                        }
+                                              child: Text("Message")),
+                                          OutlineButton(
+                                            onPressed: () =>
+                                                showNotImplemented(context),
+                                            child:
+                                                Icon(Icons.playlist_add_check),
+                                          )
+                                        ]),
+                                    replacement: ButtonBar(
+                                      alignment: MainAxisAlignment.center,
+                                      children: [
+                                        RaisedButton(
+                                            onPressed: () =>
+                                                showNotImplemented(context),
+                                            child: Text("Follow")),
+                                      ],
+                                    ),
+                                    visible: result.user.relation == 1),
 
-                                        return ButtonBar(
-                                            alignment: MainAxisAlignment.center,
-                                            children: buttons);
-                                      } else {
-                                        return Container();
-                                      }
-                                    }),
-                                Padding(
-                                    padding: EdgeInsetsDirectional.only(
-                                        start: 30, end: 30, top: 15),
-                                    child: Text(
-                                      result.user.signature,
-                                      style: softTextStyle,
-                                      textAlign: TextAlign.center,
-                                    )),
-                                SizedBox(height: 30),
+                                // The author's optional signature
+                                result.user.signature.isNotEmpty
+                                    ? Padding(
+                                        padding: EdgeInsetsDirectional.only(
+                                            start: 30, end: 30, top: 15),
+                                        child: Text(
+                                          result.user.signature,
+                                          style: softTextStyle,
+                                          textAlign: TextAlign.center,
+                                        ))
+                                    : Container(),
+
+                                // The optional link to bio
+                                ButtonBar(
+                                    alignment: MainAxisAlignment.center,
+                                    children: [
+                                      result.user.bioLink != null
+                                          ? FlatButton.icon(
+                                              icon: Icon(Icons.link),
+                                              label: Text(result.user.bioLink
+                                                  .toString()),
+                                              onPressed: () => launch(result
+                                                  .user.bioLink
+                                                  .toString()))
+                                          : Container()
+                                    ]),
                               ])),
+
                               // We need a SliverOverlapAbsorber here so that overlap
                               //    events in the nested child effect the parent
                               //  e.g. Everything scolls together
