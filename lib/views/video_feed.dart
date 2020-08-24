@@ -147,7 +147,11 @@ class _VideoFeedState extends State<VideoFeed> {
         // can scroll this parent
         child: ExtendedTabBarView(children: [
           _buildVideoWithBar(),
-          UserInfo(() => _videos[_currentIndex].author)
+          UserInfo(
+            () => _videos[_currentIndex].author,
+            onBack: (ctx) =>
+                Future.value(DefaultTabController.of(ctx).index = 0),
+          )
         ]),
       );
 

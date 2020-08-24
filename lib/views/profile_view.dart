@@ -30,7 +30,8 @@ class _ProfileViewState extends State<ProfileView> {
 
   @override
   Widget build(BuildContext context) => API.isLoggedIn()
-      ? UserInfo.currentUser(parentActions: _actions)
+      ? UserInfo.currentUser(
+          parentActions: _actions, onBack: (_) => _handleBack())
       : _buildAnonymous();
 
   Widget _buildAnonymous() => WillPopScope(

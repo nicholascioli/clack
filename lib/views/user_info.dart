@@ -25,14 +25,17 @@ class UserInfo extends StatefulWidget {
   final Author Function() authorGetter;
   final bool isCurrentUser;
   final List<Widget> parentActions;
+  final Future Function(BuildContext) onBack;
 
   const UserInfo(this.authorGetter,
-      {this.isCurrentUser = false, this.parentActions});
+      {this.isCurrentUser = false, this.parentActions, @required this.onBack});
 
   /// Create a UserInfo for the currently logged-in user.
-  static UserInfo currentUser({List<Widget> parentActions}) =>
+  static UserInfo currentUser(
+          {List<Widget> parentActions,
+          @required Future Function(BuildContext) onBack}) =>
       UserInfo(() => API.getLogin().user,
-          isCurrentUser: true, parentActions: parentActions);
+          isCurrentUser: true, parentActions: parentActions, onBack: onBack);
 
   @override
   _UserInfoState createState() => _UserInfoState();
@@ -99,14 +102,14 @@ class _UserInfoState extends State<UserInfo>
   Widget build(BuildContext context) {
     // Build the view
     return WillPopScope(
-        onWillPop: () => _handleBack(context),
+        onWillPop: () => widget.onBack(context),
         child: Scaffold(
             appBar: AppBar(
               title: Text(_author.nickname),
               centerTitle: true,
               leading: IconButton(
                 icon: Icon(Icons.arrow_back),
-                onPressed: () => _handleBack(context),
+                onPressed: () => widget.onBack(context),
               ),
               actions: _actions,
             ),
@@ -335,11 +338,4 @@ class _UserInfoState extends State<UserInfo>
           )
         ],
       );
-
-  /// Moves back to the video when back is pressed
-  Future<bool> _handleBack(BuildContext ctx) {
-    DefaultTabController.of(ctx).index = 0;
-
-    return Future.value(false);
-  }
 }
