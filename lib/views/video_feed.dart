@@ -239,7 +239,7 @@ class _VideoFeedState extends State<VideoFeed> {
               }),
           _activePage == active
               ? Divider(
-                  color: Colors.white,
+                  color: Theme.of(context).accentIconTheme.color,
                   height: 2,
                   thickness: 2,
                 )
