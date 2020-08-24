@@ -34,6 +34,8 @@ Coming soon.
 * Browse videos by music
 * Browse videos by hashtag
 * View a video's comments
+	* View a comment's replies
+	* View the comment poster's User info
 * (Un)like a video
 * Swipe to refresh video list (or press home button)
 * View Video stats
