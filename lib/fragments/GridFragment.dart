@@ -33,21 +33,25 @@ class GridFragment extends StatelessWidget {
       this.showOriginal = false,
       this.heroTag = "gridFragment"});
 
+  Widget _wrap(Widget inner) =>
+      asSliver ? SliverToBoxAdapter(child: inner) : inner;
+
   @override
   Widget build(BuildContext context) {
     // Show loading if waiting on stream
-    if (stream.length == 0 && stream.hasMore) {
-      return Center(
+    if (stream[0] == null && stream.hasMore) {
+      return _wrap(Center(
           child: SpinKitFadingGrid(
         color: Theme.of(context).textTheme.headline1.color,
         size: 50,
-      ));
+      )));
     }
 
     // If we have nothing to show, show the empty message
     if ((count != null && count < 1) ||
-        (stream.length == 0 && stream.hasMore == false))
-      return Center(child: Text(emptyMessage));
+        (stream.length == 0 && stream.hasMore == false)) {
+      return _wrap(Center(child: Text(emptyMessage)));
+    }
 
     final gridDelegate = SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 3, crossAxisSpacing: 3, mainAxisSpacing: 3);
