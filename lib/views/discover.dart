@@ -1,8 +1,10 @@
 import 'package:clack/api.dart';
 import 'package:clack/api/hashtag_result.dart';
 import 'package:clack/api/video_result.dart';
+import 'package:clack/fragments/HashtagInfoFragment.dart';
 import 'package:clack/utility.dart';
 import 'package:clack/views/video_feed.dart';
+import 'package:clack/views/video_group.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:transparent_image/transparent_image.dart';
@@ -88,10 +90,17 @@ class _DiscoverState extends State<Discover> {
               Padding(
                   padding: EdgeInsets.only(left: 10, right: 10, bottom: 10),
                   child: Row(children: [
-                    CircleAvatar(
-                      child: Text("#"),
-                      radius: 20,
-                    ),
+                    GestureDetector(
+                        onTap: () => Navigator.of(context).pushNamed(
+                            VideoGroup.routeName,
+                            arguments: VideoGroupArguments(
+                                stream: _hashtagVideos[index],
+                                headerBuilder: () =>
+                                    HashtagInfoFragment(hashtag: ht))),
+                        child: CircleAvatar(
+                          child: Text("#"),
+                          radius: 20,
+                        )),
                     SizedBox(width: 10),
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,

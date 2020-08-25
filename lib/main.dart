@@ -3,7 +3,7 @@ import 'package:clack/utility.dart';
 import 'package:clack/views/full_image.dart';
 import 'package:clack/views/settings.dart';
 import 'package:clack/views/sign_in_webview.dart';
-import 'package:clack/views/sound_group.dart';
+import 'package:clack/views/video_group.dart';
 import 'package:clack/views/user_info.dart';
 import 'package:dynamic_theme/dynamic_theme.dart';
 import 'package:flutter/material.dart';
@@ -69,7 +69,7 @@ class MyApp extends StatelessWidget {
             routes: {
               VideoFeed.routeName: (ctx) => VideoFeed(),
               FullImage.routeName: (ctx) => FullImage(),
-              SoundGroup.routeName: (ctx) => SoundGroup(),
+              VideoGroup.routeName: (ctx) => VideoGroup(),
               SignInWebview.routeName: (ctx) => SignInWebview(),
               SettingsView.routeName: (ctx) => SettingsView(),
               UserInfo.routeName: (ctx) => UserInfo.fromNamed(ctx)

@@ -1,41 +1,37 @@
 import 'dart:async';
 
 import 'package:audioplayer/audioplayer.dart';
-import 'package:clack/api.dart';
-import 'package:clack/api/music_result.dart';
-import 'package:clack/api/video_result.dart';
-import 'package:clack/fragments/GridFragment.dart';
-import 'package:clack/utility.dart';
-import 'package:clack/views/settings.dart';
+import 'package:clack/api/shared_types.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:icon_shadow/icon_shadow.dart';
-import 'package:share/share.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
-class SoundGroupArguments {
-  final ApiStream<MusicResult> stream;
-  const SoundGroupArguments(this.stream);
-}
+import '../utility.dart';
 
-class SoundGroup extends StatefulWidget {
-  static final routeName = "/audio_group";
+class MusicPlayerFragment extends StatefulWidget {
+  final Music musicInfo;
+
+  MusicPlayerFragment({@required this.musicInfo});
 
   @override
-  _SoundGroupState createState() => _SoundGroupState();
+  _MusicPlayerFragmentState createState() => _MusicPlayerFragmentState();
 }
 
-class _SoundGroupState extends State<SoundGroup> {
+class _MusicPlayerFragmentState extends State<MusicPlayerFragment> {
+  final AudioPlayer _player = AudioPlayer();
+  StreamSubscription<AudioPlayerState> _updateSubscription;
+
   final TextStyle musicTitleTextStyle =
       TextStyle(fontSize: 20, fontWeight: FontWeight.bold);
   final TextStyle textStyle = TextStyle(color: Colors.grey);
 
-  final AudioPlayer _player = AudioPlayer();
-  StreamSubscription<AudioPlayerState> _updateSubscription;
-  ApiStream<VideoResult> _videos;
-  bool _hasInit = false;
+  @override
+  void initState() {
+    // Update the UI when player changes state
+    _updateSubscription =
+        _player.onPlayerStateChanged.listen((event) => setState(() {}));
 
-  SharedPreferences _prefs;
+    super.initState();
+  }
 
   @override
   void dispose() {
@@ -48,72 +44,7 @@ class _SoundGroupState extends State<SoundGroup> {
   }
 
   @override
-  void initState() {
-    // Update the UI when player changes state
-    _updateSubscription =
-        _player.onPlayerStateChanged.listen((event) => setState(() {}));
-
-    // Get access to the shared preferences
-    SharedPreferences.getInstance()
-        .then((value) => setState(() => _prefs = value));
-
-    // Continue init
-    super.initState();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    // Extract the stream from the arguments
-    if (!_hasInit) {
-      SoundGroupArguments args = ModalRoute.of(context).settings.arguments;
-      _videos = args.stream.transform((MusicResult r) => VideoResult(
-          id: r.id,
-          createTime: r.createTime,
-          desc: r.text,
-          author: r.author,
-          music: r.musicInfo,
-          video: r.video,
-          stats: r.stats));
-      _videos.setOnChanged(() => setState(() {
-            print("UPDATE!: ${_videos[0]}");
-          }));
-    }
-    _hasInit = true;
-
-    return Scaffold(
-        appBar: AppBar(
-            actions: [
-              IconButton(
-                  icon: Icon(Icons.share),
-                  onPressed: () => _videos[0] == null || _prefs == null
-                      ? {}
-                      : Share.share(getMusicShare(_videos[0].music,
-                          _prefs.getBool(SettingsView.sharingShowInfo))))
-            ],
-            title: Text(_videos[0] == null
-                ? ""
-                : "${_videos[0].music.title} by ${_videos[0].music.authorName}")),
-        body: _videos[0] == null
-            ? Center(
-                child: SpinKitCubeGrid(
-                    color: Theme.of(context).textTheme.headline1.color),
-              )
-            : _buildPage());
-  }
-
-  Widget _buildPage() => CustomScrollView(slivers: [
-        SliverPadding(
-            padding: EdgeInsets.only(top: 20, bottom: 20),
-            sliver: SliverToBoxAdapter(child: _buildHeader())),
-        GridFragment(
-            asSliver: true,
-            stream: _videos,
-            showPlayCount: false,
-            showOriginal: true,
-            heroTag: "soundGroup")
-      ]);
-
-  Widget _buildHeader() => IntrinsicHeight(
+  Widget build(BuildContext context) => IntrinsicHeight(
           child: Padding(
         padding: EdgeInsets.only(left: 20, right: 20),
         child: Row(
@@ -125,7 +56,7 @@ class _SoundGroupState extends State<SoundGroup> {
                   child: GestureDetector(
                       onTap: () => _player.state == AudioPlayerState.PLAYING
                           ? _player.pause()
-                          : _player.play(_videos[0].music.playUrl.toString()),
+                          : _player.play(widget.musicInfo.playUrl.toString()),
                       child: AspectRatio(
                           aspectRatio: 1,
                           child: ClipRRect(
@@ -133,9 +64,8 @@ class _SoundGroupState extends State<SoundGroup> {
                               child: DecoratedBox(
                                 decoration: BoxDecoration(
                                     image: DecorationImage(
-                                        image: NetworkImage(_videos[0]
-                                            .music
-                                            .coverLarge
+                                        image: NetworkImage(widget
+                                            .musicInfo.coverLarge
                                             .toString()))),
                                 child: Center(
                                   child: IconShadowWidget(
@@ -158,13 +88,13 @@ class _SoundGroupState extends State<SoundGroup> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text(_videos[0].music.title,
+                        Text(widget.musicInfo.title,
                             style: musicTitleTextStyle),
                         Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                _videos[0].music.authorName,
+                                widget.musicInfo.authorName,
                                 style: textStyle,
                               ),
                               Text(

@@ -440,7 +440,7 @@ class API {
         return _getCommentsOrReplies(url, count, maxCursor);
       });
 
-  static ApiStream<MusicResult> getVideosForMusic(Music m, int count) =>
+  static ApiStream<VideoResult> getVideosForMusic(Music m, int count) =>
       ApiStream(count, (count, maxCursor) {
         String url = _getFormattedUrl("share/item/list", {
           "id": m.id,
@@ -472,14 +472,7 @@ class API {
         });
 
         return _getVideosForMusic(url, count, maxCursor);
-      }).transform((MusicResult r) => VideoResult(
-          id: r.id,
-          createTime: r.createTime,
-          desc: r.text,
-          author: r.author,
-          music: r.musicInfo,
-          video: r.video,
-          stats: r.stats));
+      });
 
   /// Signs a URL using TT's obfuscated JS
   ///
@@ -556,7 +549,7 @@ class API {
   }
 
   /// Gets an [ApiResult] containing a list of videos that use a given [Music] track
-  static Future<ApiResult<MusicResult>> _getVideosForMusic(
+  static Future<ApiResult<VideoResult>> _getVideosForMusic(
       String url, int count, int cursor) async {
     dynamic asJson = (await _fetchResults(url))["body"];
     List<dynamic> array =
@@ -569,7 +562,7 @@ class API {
     int maxCursor = int.tryParse(asJson["maxCursor"]);
 
     return ApiResult(
-        hasMore, maxCursor, array.map((e) => MusicResult.fromJson(e)));
+        hasMore, maxCursor, array.map((e) => VideoResult.fromMusicJson(e)));
   }
 
   /// NOT IMPLEMENTED

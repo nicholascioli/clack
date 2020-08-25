@@ -1,11 +1,12 @@
 import 'package:clack/api.dart';
 import 'package:clack/api/shared_types.dart';
 import 'package:clack/fragments/CommentsFragment.dart';
+import 'package:clack/fragments/MusicPlayerFragment.dart';
 import 'package:clack/utility.dart';
 import 'package:clack/api/video_result.dart';
 import 'package:clack/views/settings.dart';
 import 'package:clack/views/sign_in_webview.dart';
-import 'package:clack/views/sound_group.dart';
+import 'package:clack/views/video_group.dart';
 import 'package:flutter/material.dart';
 import 'package:icon_shadow/icon_shadow.dart';
 import 'package:like_button/like_button.dart';
@@ -387,9 +388,12 @@ class _VideoPageState extends State<VideoPage> with TickerProviderStateMixin {
                   _controller.pause();
 
                   // Open the page
-                  Navigator.pushNamed(context, SoundGroup.routeName,
-                      arguments: SoundGroupArguments(
-                          API.getVideosForMusic(widget.videoInfo.music, 20)));
+                  Navigator.pushNamed(context, VideoGroup.routeName,
+                      arguments: VideoGroupArguments(
+                          stream:
+                              API.getVideosForMusic(widget.videoInfo.music, 20),
+                          headerBuilder: () => MusicPlayerFragment(
+                              musicInfo: widget.videoInfo.music)));
                 },
                 child: AnimatedBuilder(
                   animation: _animation,
