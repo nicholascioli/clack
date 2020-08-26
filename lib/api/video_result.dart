@@ -63,6 +63,9 @@ class VideoResult {
   /// Whether or not the current user has liked this video
   final bool digged;
 
+  /// A list of substrings of [desc] that should render as links
+  List<TextExtra> textExtra;
+
   VideoResult(
       {this.id,
       this.createTime,
@@ -71,12 +74,20 @@ class VideoResult {
       this.music,
       this.video,
       this.stats,
-      this.digged});
+      this.digged,
+      this.textExtra});
 
   /// Construct a [VideoResult] from a supplied [json] object.
   ///
   /// The members of said JSON object must include every field by name.
   factory VideoResult.fromJson(Map<String, dynamic> json) {
+    List<dynamic> extrasRaw = json["textExtra"] ?? [];
+    List<TextExtra> extras =
+        extrasRaw.map((e) => TextExtra.fromJson(e)).toList();
+
+    // Here, we sort the extras for quick composing
+    extras.sort((a, b) => a.start - b.start);
+
     return VideoResult(
         id: json["id"],
         createTime: DateTime.fromMillisecondsSinceEpoch(
@@ -86,7 +97,8 @@ class VideoResult {
         music: Music.fromJson(json["music"]),
         video: Video.fromJson(json["video"]),
         stats: VideoStats.fromJson(json["stats"]),
-        digged: json["digged"]);
+        digged: json["digged"],
+        textExtra: extras);
   }
 
   /// Construct a [VideoResult] from a list of music videos
@@ -98,6 +110,13 @@ class VideoResult {
     final videoMeta = result["video"]["videoMeta"];
     final music = json["musicInfos"];
     final author = json["authorInfos"];
+
+    List<dynamic> extrasRaw = json["textExtra"] ?? [];
+    List<TextExtra> extras =
+        extrasRaw.map((e) => TextExtra.fromJson(e)).toList();
+
+    // Here, we sort the extras for quick composing
+    extras.sort((a, b) => a.start - b.start);
 
     return VideoResult(
         id: json["id"],
@@ -143,6 +162,7 @@ class VideoResult {
             diggCount: result["diggCount"],
             playCount: result["playCount"],
             shareCount: result["shareCount"]),
-        digged: json["liked"]);
+        digged: json["liked"],
+        textExtra: extras);
   }
 }

@@ -284,9 +284,6 @@ class Comment {
   /// Note: Original is user_burried
   final bool userBuried;
 
-  /// Total count of comments for this video
-  final int totalCount;
-
   Comment(
       {this.cid,
       this.text,
@@ -300,10 +297,9 @@ class Comment {
       this.replyComment,
       this.replyCommentTotal,
       this.isAuthorDigged,
-      this.userBuried,
-      this.totalCount});
+      this.userBuried});
 
-  factory Comment.fromJson(Map<String, dynamic> json, int totalCount) {
+  factory Comment.fromJson(Map<String, dynamic> json) {
     Map<String, dynamic> user = json["user"];
 
     return Comment(
@@ -324,14 +320,74 @@ class Comment {
         userDigged: json["user_digged"] == 1,
         replyComment:
             json.containsKey("reply_comment") && json["reply_comment"] != null
-                ? Comment.fromJson(json["reply_comment"][0], 1)
+                ? Comment.fromJson(json["reply_comment"][0])
                 : null,
         // This is optional for replies (sub-comments)
         replyCommentTotal: json.containsKey("reply_comment_total")
             ? json["reply_comment_total"]
             : 0,
         isAuthorDigged: json["is_author_digged"] == 1,
-        userBuried: json["user_buried"] == 1,
-        totalCount: totalCount);
+        userBuried: json["user_buried"] == 1);
+  }
+}
+
+@dataClass
+class TextExtra {
+  /// The internal ID for this resource
+  final String awemeId;
+
+  /// The start position in the desc string
+  final int start;
+
+  /// The end position in the desc string
+  final int end;
+
+  /// The name of the hashtag, if present
+  final String hashtagName;
+
+  /// The ID of the hashtag, if present
+  final String hashtagId;
+
+  /// The type of TextExtra
+  ///
+  /// Note: 0 seems to mean USER while 1 means HASHTAG
+  final int type;
+
+  /// The User ID, if present
+  final String userId;
+
+  /// The User's uniqueId, if present
+  final String userUniqueId;
+
+  /// The User's secUid, if present
+  final String secUid;
+
+  const TextExtra(
+      {this.awemeId,
+      this.start,
+      this.end,
+      this.hashtagName,
+      this.hashtagId,
+      this.type,
+      this.userId,
+      this.userUniqueId,
+      this.secUid});
+
+  factory TextExtra.fromJson(Map<String, dynamic> json) {
+    // Warning: TT is dumb and changes case for no reason
+    dynamic Function(String) getter = (key) => json.containsKey(key)
+        ? json[key]
+        : json[key[0].toUpperCase() + key.substring(1)];
+
+    return TextExtra(
+        awemeId: getter("awemeId"),
+        start: getter("start"),
+        end: getter("end"),
+        hashtagName: getter("hashtagName"),
+        hashtagId: getter("hashtagId"),
+        type: getter("type"),
+        userId: getter("userId"),
+        userUniqueId: getter("userUniqueId"),
+        secUid: getter("secUid"));
   }
 }
