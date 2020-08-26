@@ -46,6 +46,17 @@ class _DiscoverState extends State<Discover> {
   }
 
   @override
+  void dispose() {
+    // Remove the listeners
+    _hashtags.setOnChanged(() {});
+    _hashtagVideos.forEach((element) {
+      element.setOnChanged(() {});
+    });
+
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return WillPopScope(
         child: Scaffold(
