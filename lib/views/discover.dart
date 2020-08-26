@@ -181,7 +181,7 @@ class _DiscoverState extends State<Discover> {
       Navigator.of(context).pushNamed(VideoGroup.routeName,
           arguments: VideoGroupArguments(
               stream: stream,
-              headerBuilder: () => HashtagInfoFragment(hashtag: ht)));
+              headerBuilder: () => HashtagInfoFragment(initialHashtag: ht)));
 
   Future<bool> _handleBack() {
     widget.setActive(VideoFeedActivePage.VIDEO);
