@@ -1,3 +1,4 @@
+import 'package:clack/api/hashtag_result.dart';
 import 'package:clack/api/video_result.dart';
 import 'package:clack/views/settings.dart';
 import 'package:flutter/material.dart';
@@ -50,6 +51,10 @@ String getVideoShare(VideoResult video, bool showInfo) =>
 String getMusicShare(Music music, bool showInfo) =>
     (showInfo ? "Check out videos with the song '${music.title}'!\n\n" : "") +
     "https://www.tiktok.com/music/${music.title.replaceAll(' ', '-').replaceAll(new RegExp(r"[\(\),?!.]"), '')}-${music.id}";
+
+String getHashtagShare(HashtagResult ht, bool showInfo) =>
+    (showInfo ? "Check out videos with the hashtag #${ht.title}" : "") +
+    "https://www.tiktok.com/tag/${ht.title}";
 
 /// Shows a dialog with the text 'NOT IMPLEMENTED'
 void showNotImplemented(BuildContext context) => showDialog(

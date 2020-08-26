@@ -10,9 +10,12 @@ import 'package:shared_preferences/shared_preferences.dart';
 class VideoGroupArguments {
   final Widget Function() headerBuilder;
   final ApiStream<VideoResult> stream;
+  final String Function(bool shareExtra) getShare;
 
   const VideoGroupArguments(
-      {@required this.stream, @required this.headerBuilder});
+      {@required this.stream,
+      @required this.headerBuilder,
+      @required this.getShare});
 }
 
 class VideoGroup extends StatefulWidget {
@@ -26,6 +29,7 @@ class _VideoGroupState extends State<VideoGroup> {
   Widget Function() _headerBuilder;
   ApiStream<VideoResult> _videos;
   bool _hasInit = false;
+  String Function(bool shareExtra) _getShare;
 
   SharedPreferences _prefs;
 
@@ -49,6 +53,7 @@ class _VideoGroupState extends State<VideoGroup> {
       _videos.setOnChanged(() => setState(() {
             print("UPDATE!: ${_videos[0]}");
           }));
+      _getShare = args.getShare;
       _hasInit = true;
     }
 
@@ -56,10 +61,10 @@ class _VideoGroupState extends State<VideoGroup> {
         appBar: AppBar(actions: [
           IconButton(
               icon: Icon(Icons.share),
-              onPressed: () => _videos[0] == null || _prefs == null
+              onPressed: () => _prefs == null
                   ? {}
-                  : Share.share(getMusicShare(_videos[0].music,
-                      _prefs.getBool(SettingsView.sharingShowInfo))))
+                  : Share.share(
+                      _getShare(_prefs.getBool(SettingsView.sharingShowInfo))))
         ]),
         body: _buildPage());
   }

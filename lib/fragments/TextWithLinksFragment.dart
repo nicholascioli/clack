@@ -2,6 +2,7 @@ import 'package:clack/api/api_stream.dart';
 import 'package:clack/api/hashtag_result.dart';
 import 'package:clack/api/shared_types.dart';
 import 'package:clack/api/video_result.dart';
+import 'package:clack/utility.dart';
 import 'package:clack/views/user_info.dart';
 import 'package:clack/views/video_feed.dart';
 import 'package:clack/views/video_group.dart';
@@ -74,7 +75,9 @@ class TextWithLinksFragment extends StatelessWidget {
                               headerBuilder: () => HashtagInfoFragment(
                                     initialHashtag: ht,
                                     initialIsActual: true,
-                                  )));
+                                  ),
+                              getShare: (shareExtra) =>
+                                  getHashtagShare(ht, shareExtra)));
                     } else {
                       Navigator.of(context).pushNamed(UserInfo.routeName,
                           arguments: UserInfoArgs(

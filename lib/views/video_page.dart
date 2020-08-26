@@ -405,7 +405,9 @@ class _VideoPageState extends State<VideoPage> with TickerProviderStateMixin {
                           stream:
                               API.getVideosForMusic(widget.videoInfo.music, 20),
                           headerBuilder: () => MusicPlayerFragment(
-                              musicInfo: widget.videoInfo.music)));
+                              musicInfo: widget.videoInfo.music),
+                          getShare: (shareExtra) => getMusicShare(
+                              widget.videoInfo.music, shareExtra)));
                 },
                 child: AnimatedBuilder(
                   animation: _animation,
