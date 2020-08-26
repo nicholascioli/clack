@@ -148,6 +148,15 @@ class API {
     return Future.value(asJson.containsKey("follow_status") && shouldFollow);
   }
 
+  static Future<VideoResult> getVideoInfo(String videoId) async {
+    String url = _getFormattedUrl("api/item/detail", {"itemId": videoId});
+
+    dynamic asJson = await _fetchResults(url);
+    dynamic info = asJson["itemInfo"]["itemStruct"];
+
+    return VideoResult.fromJson(info);
+  }
+
   /// Get an [author]'s extended info.
   ///
   /// This returns a [Future] as it requires network requests.
@@ -159,6 +168,15 @@ class API {
     dynamic user = asJson["userInfo"];
 
     return AuthorResult.fromJson(user);
+  }
+
+  static Future<HashtagResult> getHashtagInfo(String hashtagName) async {
+    String url = _getFormattedUrl(
+        "api/challenge/detail", {"challengeName": hashtagName});
+
+    dynamic asJson = await _fetchResults(url);
+
+    return HashtagResult.fromJson(asJson["challengeInfo"]);
   }
 
   /// Get an [ApiStream]<[VideoResult]> of currently trending videos.
@@ -306,8 +324,7 @@ class API {
         // // TODO: How do we know that there aren't more?
         return _fetchResultsFormatted(url, maxCursor,
             bodyParser: (body) => body["challengeInfoList"],
-            resultMapper: (e) =>
-                HashtagResult.fromJson(e["challenge"], e["stats"]),
+            resultMapper: (e) => HashtagResult.fromJson(e),
             infoParser: (json) => Tuple2(false, json["offset"]));
       });
 

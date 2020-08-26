@@ -30,8 +30,8 @@ class ApiStream<T> {
 
   // Used for checking if we can (and should) fetch more
   bool isFetching = false;
-  bool hasMore = true;
-  bool autoFetch = true;
+  bool hasMore;
+  bool autoFetch;
 
   // Internal list used for caching network results
   List<T> _results;
@@ -42,7 +42,8 @@ class ApiStream<T> {
   /// Construct an [ApiStream]
   ///
   /// Avoid calling this directly in favor of [API]'s static methods.
-  ApiStream(this._count, this._stream, {List<T> initialResults}) {
+  ApiStream(this._count, this._stream,
+      {List<T> initialResults, this.hasMore = true, this.autoFetch = true}) {
     this._results = initialResults != null ? initialResults : [];
   }
 
