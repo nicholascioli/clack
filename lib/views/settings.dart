@@ -191,19 +191,30 @@ class _SettingsViewState extends State<SettingsView> {
   void _handleColorPicker(String title, Color old,
       ThemeData Function(Color color) themeSetter, String prefKey) async {
     Color result = old;
-    void Function(Color c) setColor = (c) {
-      result = c;
-      print("KILL ME: $result");
-    };
+    void Function(Color c, void Function(void Function() innner) refresh)
+        setColor = (c, refresh) => refresh(() => result = c);
 
     bool cancelled = await showDialog<bool>(
         context: context,
         builder: (context) => AlertDialog(
               title: Text(title),
-              content: MaterialPicker(
-                  pickerColor: old,
-                  enableLabel: true,
-                  onColorChanged: (c) => setColor(c)),
+              content: StatefulBuilder(
+                  builder: (context, refreshView) => SingleChildScrollView(
+                          child: Column(children: [
+                        MaterialPicker(
+                            pickerColor: old,
+                            enableLabel: true,
+                            onColorChanged: (c) => setColor(c, refreshView)),
+                        Padding(
+                            padding: EdgeInsets.symmetric(vertical: 20),
+                            child: Row(children: [
+                              Expanded(child: Text("Selected Color: ")),
+                              Container(
+                                  key: UniqueKey(),
+                                  child: ColorIndicator(
+                                      HSVColor.fromColor(result)))
+                            ]))
+                      ]))),
               actions: [
                 FlatButton(
                   child: Text("Cancel"),
