@@ -38,8 +38,11 @@ class GridFragment extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Start loading, if needed
+    stream.preload();
+
     // Show loading if waiting on stream
-    if (stream[0] == null && stream.hasMore) {
+    if (!stream.hasLoaded) {
       return _wrap(Center(
           child: SpinKitFadingGrid(
         color: Theme.of(context).textTheme.headline1.color,
