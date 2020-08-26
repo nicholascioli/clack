@@ -25,7 +25,7 @@ class ApiResult<T> {
 ///
 class ApiStream<T> {
   int _maxCursor = 0;
-  int count = 0;
+  int _count = 0;
   Future<ApiResult<T>> Function(int count, int maxCursor) _stream;
 
   // Used for checking if we can (and should) fetch more
@@ -42,7 +42,7 @@ class ApiStream<T> {
   /// Construct an [ApiStream]
   ///
   /// Avoid calling this directly in favor of [API]'s static methods.
-  ApiStream(this.count, this._stream, {List<T> initialResults}) {
+  ApiStream(this._count, this._stream, {List<T> initialResults}) {
     this._results = initialResults != null ? initialResults : [];
   }
 
@@ -60,7 +60,7 @@ class ApiStream<T> {
     // If we see that we need more, fetch in the background
     if (hasMore &&
         autoFetch &&
-        i >= _results.length - max(1, (count * 0.2).floor())) fetch();
+        i >= _results.length - max(1, (_count * 0.2).floor())) fetch();
 
     // Just in case we took too long and forgot to fetch, we return null
     return i >= _results.length ? null : _results[i];
@@ -73,6 +73,9 @@ class ApiStream<T> {
     return Future.value();
   }
 
+  /// Does this stream have data
+  bool get hasLoaded => _results.length != 0 || !hasMore;
+
   /// Fetch the next set of results in the background
   Future<void> fetch() async {
     // Don't do anything if we have no more results or we are currently fetching
@@ -83,7 +86,7 @@ class ApiStream<T> {
 
     ApiResult<T> r = ApiResult(false, 0, []);
     try {
-      r = await _stream(count, _maxCursor);
+      r = await _stream(_count, _maxCursor);
       // print("Next: (${r.nextCursor} | ${r.hasMore}) -> ${r.results}");
       _maxCursor = r.nextCursor;
       hasMore = r.hasMore;
@@ -153,7 +156,7 @@ class ApiStream<T> {
   ///
   /// For an in-depth example, see [SoundGroup].
   ApiStream<U> transform<U>(U Function(T) transformer) {
-    return ApiStream(count, (count, cursor) async {
+    return ApiStream(_count, (count, cursor) async {
       final res = await _stream(count, cursor);
       if (res == null) return Future.value(null);
 
