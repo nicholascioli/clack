@@ -1,7 +1,6 @@
 import 'package:clack/api/api_stream.dart';
 import 'package:clack/api/video_result.dart';
 import 'package:clack/fragments/GridFragment.dart';
-import 'package:clack/utility.dart';
 import 'package:clack/views/settings.dart';
 import 'package:flutter/material.dart';
 import 'package:share/share.dart';
