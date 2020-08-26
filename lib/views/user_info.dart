@@ -102,10 +102,15 @@ class _UserInfoState extends State<UserInfo>
     // Fetch the author's info from the API
     _sparseAuthor = widget.args.authorGetter();
     _authorResult = API.getAuthorInfo(_sparseAuthor);
-    _authorResult.then((value) => setState(() {
-          _isFollowing = (value.user.relation == 1);
-          _nickname = value.user.nickname;
-        }));
+    _authorResult.then((value) {
+      // Do nothing if we died early
+      if (!mounted) return;
+
+      setState(() {
+        _isFollowing = (value.user.relation == 1);
+        _nickname = value.user.nickname;
+      });
+    });
 
     // Change the AppBar's actions when viewing the current user
     _actions =
@@ -123,8 +128,12 @@ class _UserInfoState extends State<UserInfo>
     }
 
     // Get the prefs
-    SharedPreferences.getInstance()
-        .then((value) => setState(() => _prefs = value));
+    SharedPreferences.getInstance().then((value) {
+      // Do nothing if we died early
+      if (!mounted) return;
+
+      setState(() => _prefs = value);
+    });
   }
 
   @override

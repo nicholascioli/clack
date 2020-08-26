@@ -55,7 +55,6 @@ class TextWithLinksFragment extends StatelessWidget {
 
                     if (isDuet) {
                       // final videoInfo = await API.getVideoInfo(info.awemeId);
-                      // TODO: Convert to named
                       Navigator.of(context).pushNamed(VideoFeed.routeName,
                           arguments: VideoFeedArgs(
                               ApiStream(

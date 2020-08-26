@@ -1,4 +1,7 @@
+import 'dart:async';
+
 import 'package:clack/api.dart';
+import 'package:clack/link_handler.dart';
 import 'package:clack/utility.dart';
 import 'package:clack/views/full_image.dart';
 import 'package:clack/views/intro_screen.dart';
@@ -25,8 +28,8 @@ void main() {
   return runApp(Phoenix(
       child: IntroScreen(
           nextScreenBuilder: () async {
-            // ALlow the animation to fully play out
-            await Future.delayed(const Duration(seconds: 2));
+            // Allow the animation to fully play out
+            await Future.delayed(const Duration(seconds: 1));
 
             // Initialize the API
             await API.init();
@@ -58,10 +61,33 @@ void main() {
           color: Colors.white)));
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends StatefulWidget {
   final SharedPreferences prefs;
 
   const MyApp({this.prefs});
+
+  @override
+  _MyAppState createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
+  final GlobalKey<NavigatorState> _navigatorKey =
+      new GlobalKey<NavigatorState>();
+  LinkHandler _handler;
+
+  @override
+  void initState() {
+    _handler = LinkHandler(navigatorKey: _navigatorKey);
+
+    super.initState();
+  }
+
+  @override
+  void dispose() {
+    _handler.dispose();
+
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -73,11 +99,14 @@ class MyApp extends StatelessWidget {
         data: (brightness) => createTheme(
             context: context,
             brightness: brightness,
-            primaryColor: getThemeColor(prefs, SettingsView.themePrimaryColor),
+            primaryColor:
+                getThemeColor(widget.prefs, SettingsView.themePrimaryColor),
             bottomBarColor:
-                getThemeColor(prefs, SettingsView.themeBottomBarColor),
-            iconColor: getThemeColor(prefs, SettingsView.themeIconColor)),
+                getThemeColor(widget.prefs, SettingsView.themeBottomBarColor),
+            iconColor:
+                getThemeColor(widget.prefs, SettingsView.themeIconColor)),
         themedWidgetBuilder: (context, theme) => MaterialApp(
+            navigatorKey: _navigatorKey,
             title: 'Clack',
             initialRoute: VideoFeed.routeName,
             routes: {

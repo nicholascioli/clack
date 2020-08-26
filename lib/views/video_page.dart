@@ -106,6 +106,8 @@ class _VideoPageState extends State<VideoPage> with TickerProviderStateMixin {
   /// Shared preferences for the app
   SharedPreferences _prefs;
 
+  void Function() _videoListener;
+
   @override
   void initState() {
     super.initState();
@@ -114,11 +116,21 @@ class _VideoPageState extends State<VideoPage> with TickerProviderStateMixin {
     _setupVideo(widget.videoInfo);
 
     // Make sure that we WakeLock if there is a video playing. We disable on dispose
-    _controller.addListener(() => Wakelock.isEnabled.then((haveLock) {
-          if (!haveLock && _controller.value.isPlaying)
-            Wakelock.enable();
-          else if (haveLock && !_controller.value.isPlaying) Wakelock.disable();
-        }));
+    _videoListener = () async {
+      // If we have opened to a link, pause the video
+      if (!_manuallyPaused && !ModalRoute.of(context).isCurrent) {
+        _manuallyPaused = true;
+        await _controller.pause();
+      }
+
+      // Should we get wake lock?
+      Wakelock.isEnabled.then((haveLock) {
+        if (!haveLock && _controller.value.isPlaying)
+          Wakelock.enable();
+        else if (haveLock && !_controller.value.isPlaying) Wakelock.disable();
+      });
+    };
+    _controller.addListener(_videoListener);
 
     // Set up the animation controller to spin the music button indefinitely
     _animation =
@@ -141,6 +153,7 @@ class _VideoPageState extends State<VideoPage> with TickerProviderStateMixin {
   @override
   void dispose() {
     // Pause any playing videos
+    _controller.removeListener(_videoListener);
     _controller.pause();
 
     // Make sure to release the WakeLock, if we have it

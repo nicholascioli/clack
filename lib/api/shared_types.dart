@@ -112,7 +112,12 @@ class Music {
   /// Whether this music track is original to an author
   final bool original;
 
-  Music(
+  /// The amount of videos that have this music
+  ///
+  /// Note: Not all requests have this. See [API.getMusicInfo]
+  final int videoCount;
+
+  const Music(
       {this.id,
       this.authorName,
       this.title,
@@ -120,12 +125,13 @@ class Music {
       this.coverMedium,
       this.coverThumb,
       this.playUrl,
-      this.original});
+      this.original,
+      this.videoCount});
 
   /// Construct a [Music] object from a supplied [json] object.
   ///
   /// The members of said JSON object must include every field by name.
-  factory Music.fromJson(Map<String, dynamic> json) {
+  factory Music.fromJson(Map<String, dynamic> json, {int videoCount}) {
     return Music(
         id: json["id"],
         authorName: json["authorName"],
@@ -134,7 +140,8 @@ class Music {
         coverMedium: Uri.parse(json["coverMedium"]),
         coverThumb: Uri.parse(json["coverThumb"]),
         playUrl: Uri.parse(json["playUrl"]),
-        original: json["original"]);
+        original: json["original"],
+        videoCount: videoCount);
   }
 }
 

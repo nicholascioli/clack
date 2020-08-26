@@ -37,7 +37,7 @@ String getAuthorShare(AuthorResult authorResult, bool showInfo) =>
     (showInfo
         ? "${authorResult.shareMeta.title} \n${authorResult.shareMeta.desc} \n\n"
         : "") +
-    "https://tiktok.com/@${authorResult.user.uniqueId}";
+    "https://www.tiktok.com/@${authorResult.user.uniqueId}";
 
 /// Gets a string containing shareable info about a [video]
 String getVideoShare(VideoResult video, bool showInfo) =>

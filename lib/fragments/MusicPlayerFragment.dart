@@ -98,7 +98,7 @@ class _MusicPlayerFragmentState extends State<MusicPlayerFragment> {
                                 style: textStyle,
                               ),
                               Text(
-                                "? videos",
+                                "${widget.musicInfo.videoCount ?? "?"} video(s)",
                                 style: textStyle,
                               )
                             ]),

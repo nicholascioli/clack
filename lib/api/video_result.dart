@@ -152,7 +152,9 @@ class VideoResult {
                 .toString(), // TODO; Here, ratio is a number...
             cover: Uri.parse(result["covers"][0]),
             dynamicCover: Uri.parse(result["coversDynamic"][0]),
-            originCover: Uri.parse(result["coversOrigin"][0]),
+            originCover: json.containsKey("coversOrigin")
+                ? Uri.parse(result["coversOrigin"][0])
+                : null,
             playAddr: Uri.parse(result["video"]["urls"][0]),
             downloadAddr: Uri.parse(result["video"]["urls"][
                 0]), // TODO: Request does not include this, so duplicate for now

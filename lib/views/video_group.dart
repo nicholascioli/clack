@@ -35,8 +35,9 @@ class _VideoGroupState extends State<VideoGroup> {
   @override
   void initState() {
     // Get access to the shared preferences
-    SharedPreferences.getInstance()
-        .then((value) => setState(() => _prefs = value));
+    SharedPreferences.getInstance().then((value) {
+      if (mounted) setState(() => _prefs = value);
+    });
 
     // Continue init
     super.initState();
@@ -49,9 +50,12 @@ class _VideoGroupState extends State<VideoGroup> {
       VideoGroupArguments args = ModalRoute.of(context).settings.arguments;
       _headerBuilder = args.headerBuilder;
       _videos = args.stream;
-      _videos.setOnChanged(() => setState(() {
+      _videos.setOnChanged(() {
+        if (mounted)
+          setState(() {
             print("UPDATE!: ${_videos[0]}");
-          }));
+          });
+      });
       _getShare = args.getShare;
       _hasInit = true;
     }

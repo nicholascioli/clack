@@ -179,6 +179,16 @@ class API {
     return HashtagResult.fromJson(asJson["challengeInfo"]);
   }
 
+  static Future<Music> getMusicInfo(String musicId) async {
+    String url = _getFormattedUrl("api/music/detail", {"musicId": musicId});
+
+    dynamic asJson = await _fetchResults(url);
+    dynamic music = asJson["musicInfo"];
+
+    return Music.fromJson(music["music"],
+        videoCount: music["stats"]["videoCount"]);
+  }
+
   /// Get an [ApiStream]<[VideoResult]> of currently trending videos.
   static ApiStream<VideoResult> getTrendingStream(int count) =>
       ApiStream(count, (count, cursor) {
