@@ -3,6 +3,7 @@ import 'package:clack/api/api_stream.dart';
 import 'package:clack/api/shared_types.dart';
 import 'package:clack/fragments/CommentsFragment.dart';
 import 'package:clack/fragments/MusicPlayerFragment.dart';
+import 'package:clack/fragments/TextWithLinksFragment.dart';
 import 'package:clack/utility.dart';
 import 'package:clack/api/video_result.dart';
 import 'package:clack/views/settings.dart';
@@ -248,18 +249,28 @@ class _VideoPageState extends State<VideoPage> with TickerProviderStateMixin {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              "@${widget.videoInfo.author.uniqueId}",
-              style: _usernameTextStyle,
-            ),
-            (widget.videoInfo.desc.isNotEmpty
-                ? SizedBox(height: 20)
-                : Container()),
-            Text(
-              widget.videoInfo.desc,
-              style: _textStyle,
-              softWrap: true,
-            ),
+            GestureDetector(
+                onTap: () {
+                  if (widget.showUserPage)
+                    DefaultTabController.of(context).index = 1;
+                },
+                child: Text(
+                  "@${widget.videoInfo.author.uniqueId}",
+                  style: _usernameTextStyle,
+                )),
+            Visibility(
+                visible: widget.videoInfo.desc.isNotEmpty,
+                child: Padding(
+                    padding: EdgeInsets.only(top: 20),
+                    child: TextWithLinksFragment(
+                        videoResult: widget.videoInfo,
+                        style: _textStyle,
+                        context: context,
+                        onTap: () {
+                          // Stop the video
+                          _manuallyPaused = true;
+                          _controller.pause();
+                        }))),
             SizedBox(height: 20),
             Row(mainAxisSize: MainAxisSize.max, children: [
               IconShadowWidget(
