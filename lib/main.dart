@@ -1,6 +1,7 @@
 import 'package:clack/api.dart';
 import 'package:clack/utility.dart';
 import 'package:clack/views/full_image.dart';
+import 'package:clack/views/intro_screen.dart';
 import 'package:clack/views/settings.dart';
 import 'package:clack/views/sign_in_webview.dart';
 import 'package:clack/views/video_group.dart';
@@ -13,35 +14,48 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'views/video_feed.dart';
 
-void main() async {
+void main() {
   // Needed to ensure API can be initialized before app starts
   WidgetsFlutterBinding.ensureInitialized();
 
   // Lock orientation to portrait only
   SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
 
-  // Initialize the API
-  await API.init();
+  // Run the app (with splash screen while loading)
+  return runApp(Phoenix(
+      child: IntroScreen(
+          nextScreenBuilder: () async {
+            // ALlow the animation to fully play out
+            await Future.delayed(const Duration(seconds: 2));
 
-  // Set app defaults
-  SharedPreferences prefs = await SharedPreferences.getInstance();
-  void Function(
-          String key, dynamic value, Future Function(String, dynamic) method)
-      initPref = (key, value, method) {
-    if (!prefs.containsKey(key)) {
-      method(key, value);
-    }
-  };
-  var setBool = (String key, dynamic value) => prefs.setBool(key, value);
-  var setString = (String key, dynamic value) => prefs.setString(key, value);
-  // var setInt = (String key, dynamic value) => prefs.setInt(key, value);
+            // Initialize the API
+            await API.init();
 
-  initPref(SettingsView.videoFullQualityKey, false, setBool);
-  initPref(SettingsView.sharingShowInfo, true, setBool);
-  initPref(SettingsView.advancedUserAgentKey, API.USER_AGENT, setString);
+            // Set app defaults
+            SharedPreferences prefs = await SharedPreferences.getInstance();
+            void Function(String key, dynamic value,
+                    Future Function(String, dynamic) method) initPref =
+                (key, value, method) {
+              if (!prefs.containsKey(key)) {
+                method(key, value);
+              }
+            };
+            var setBool =
+                (String key, dynamic value) => prefs.setBool(key, value);
+            var setString =
+                (String key, dynamic value) => prefs.setString(key, value);
+            // var setInt = (String key, dynamic value) => prefs.setInt(key, value);
 
-  // Run the app
-  return runApp(Phoenix(child: MyApp(prefs: prefs)));
+            // Initialize the settings, if not present
+            initPref(SettingsView.videoFullQualityKey, false, setBool);
+            initPref(SettingsView.sharingShowInfo, true, setBool);
+            initPref(
+                SettingsView.advancedUserAgentKey, API.USER_AGENT, setString);
+
+            // Run the app
+            return MyApp(prefs: prefs);
+          },
+          color: Colors.white)));
 }
 
 class MyApp extends StatelessWidget {
