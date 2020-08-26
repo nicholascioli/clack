@@ -21,7 +21,7 @@ class UserInfoArgs {
   final Author Function() authorGetter;
   final bool isCurrentUser;
   final List<Widget> parentActions;
-  final Future Function(BuildContext) onBack;
+  final Future<void> Function(BuildContext) onBack;
 
   const UserInfoArgs(
       {@required this.authorGetter,
@@ -85,6 +85,7 @@ class _UserInfoState extends State<UserInfo>
   ApiStream<VideoResult> _authorFavoritedVideos;
   bool _hasInit = false;
   bool _isFollowing = false;
+  String _nickname = "";
 
   /// The actions to show in the appbar.
   ///
@@ -101,7 +102,10 @@ class _UserInfoState extends State<UserInfo>
     // Fetch the author's info from the API
     _sparseAuthor = widget.args.authorGetter();
     _authorResult = API.getAuthorInfo(_sparseAuthor);
-    _authorResult.then((value) => _isFollowing = (value.user.relation == 1));
+    _authorResult.then((value) => setState(() {
+          _isFollowing = (value.user.relation == 1);
+          _nickname = value.user.nickname;
+        }));
 
     // Change the AppBar's actions when viewing the current user
     _actions =
@@ -128,7 +132,7 @@ class _UserInfoState extends State<UserInfo>
       onWillPop: () => widget.args.onBack(context),
       child: Scaffold(
           appBar: AppBar(
-            title: Text(_sparseAuthor.nickname),
+            title: Text(_sparseAuthor.nickname ?? _nickname),
             centerTitle: true,
             leading: IconButton(
               icon: Icon(Icons.arrow_back),
@@ -175,24 +179,17 @@ class _UserInfoState extends State<UserInfo>
                                 Row(children: [
                                   Spacer(),
                                   Expanded(
-                                      child: GestureDetector(
-                                          onTap: () => Navigator.pushNamed(
-                                              context, FullImage.routeName,
-                                              arguments: FullImageArgs(result
-                                                  .user.avatarLarger
-                                                  .toString())),
-                                          // Here we use a [Hero] so that the thumbnail can
-                                          // animate to and back from the [FullImage] when tapped
-                                          child: Hero(
-                                              tag: "full_image",
-                                              child: AspectRatio(
-                                                  aspectRatio: 1,
-                                                  child: CircleAvatar(
-                                                    backgroundImage:
-                                                        NetworkImage(result
-                                                            .user.avatarMedium
-                                                            .toString()),
-                                                  ))))),
+                                      child: FullImage.launcher(
+                                          context: context,
+                                          url: result.user.avatarLarger
+                                              .toString(),
+                                          child: AspectRatio(
+                                              aspectRatio: 1,
+                                              child: CircleAvatar(
+                                                backgroundImage: NetworkImage(
+                                                    result.user.avatarMedium
+                                                        .toString()),
+                                              )))),
                                   Spacer()
                                 ]),
 
@@ -302,13 +299,21 @@ class _UserInfoState extends State<UserInfo>
                                     alignment: MainAxisAlignment.center,
                                     children: [
                                       result.user.bioLink != null
-                                          ? FlatButton.icon(
-                                              icon: Icon(Icons.link),
-                                              label: Text(result.user.bioLink
-                                                  .toString()),
-                                              onPressed: () => launch(result
-                                                  .user.bioLink
-                                                  .toString()))
+                                          ? Padding(
+                                              padding: EdgeInsets.symmetric(
+                                                  horizontal: 50),
+                                              child: FlatButton.icon(
+                                                  icon: Icon(Icons.link),
+                                                  label: Flexible(
+                                                      child: Text(
+                                                          result.user.bioLink
+                                                              .toString(),
+                                                          softWrap: false,
+                                                          overflow: TextOverflow
+                                                              .ellipsis)),
+                                                  onPressed: () => launch(result
+                                                      .user.bioLink
+                                                      .toString())))
                                           : Container()
                                     ]),
                               ])),
