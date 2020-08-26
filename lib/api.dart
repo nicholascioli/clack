@@ -1,18 +1,18 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
-import 'dart:math';
 
 import 'package:clack/api/author_result.dart';
 import 'package:clack/api/hashtag_result.dart';
-import 'package:clack/api/music_result.dart';
 import 'package:clack/api/video_result.dart';
 import 'package:clack/utility.dart';
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
+import 'package:tuple/tuple.dart';
 
+import 'api/api_stream.dart';
 import 'api/shared_types.dart';
 
 const TYPE_RECENT_VIDEOS = 1;
@@ -20,186 +20,6 @@ const TYPE_LIKED_VIDEOS = 2;
 const TYPE_TAG_VIDEOS = 3;
 const TYPE_AUDIO_VIDEOS = 4;
 const TYPE_TRENDING_VIDEOS = 5;
-
-/// A result from an API call.
-///
-/// [hasMore] indicates that there is more data available to fetch, starting at
-/// [nextCursor].
-class ApiResult<T> {
-  final bool hasMore;
-  final int nextCursor;
-  final Iterable<T> results;
-
-  const ApiResult(this.hasMore, this.nextCursor, this.results);
-}
-
-/// Generic stream of results from TT'a API.
-///
-/// An [ApiResult] overrides `operator []` to allow for indexed access to
-/// its members. Trying to access an index which has not been fetched yet
-/// or is out of bounds returns `null`.
-///
-/// Since this is a networked-backed list, any attempts to access indices close
-/// to the current length (within 20% of the `count`) of the list or past the bounds will trigger
-/// a network request to fetch more. You can subscribe to changes to this list
-/// caused by network requests by calling [setOnChanged()].
-///
-class ApiStream<T> {
-  int _maxCursor = 0;
-  int count = 0;
-  Future<ApiResult<T>> Function(int count, int maxCursor) _stream;
-
-  // Used for checking if we can (and should) fetch more
-  bool isFetching = false;
-  bool hasMore = true;
-  bool autoFetch = true;
-
-  // Internal list used for caching network results
-  List<T> _results;
-
-  // Callback for when data changes
-  void Function() _cb = () {};
-
-  /// Construct an [ApiStream]
-  ///
-  /// Avoid calling this directly in favor of [API]'s static methods.
-  ApiStream(this.count, this._stream, {List<T> initialResults}) {
-    this._results = initialResults != null ? initialResults : [];
-  }
-
-  /// Return a const inner list
-  Map<int, T> get results => _results.asMap();
-
-  // The internal list grows linearly starting from 0.
-  // Note: This should probably be fixed to allow for 'seeking'
-  //   to the right position, but it is unclear how to start from
-  //   an arbitrary index considering that each network request returns
-  //   the next max cursor to fetch from.
-  // Note2: We use the count as an indication of how frequently to fetch (20% of
-  //   the count is defined as the bounds for fetching)
-  T operator [](int i) {
-    // If we see that we need more, fetch in the background
-    if (hasMore &&
-        autoFetch &&
-        i >= _results.length - max(1, (count * 0.2).floor()))
-      _next().then((value) {
-        print("API STREAM FETCHED: $value");
-
-        // Do nothing if we get nothing
-        if (value.isEmpty) return;
-
-        _results.addAll(value);
-
-        // Update listener
-        this._cb();
-      });
-
-    // Just in case we took too long and forgot to fetch, we return null
-    return i >= _results.length ? null : _results[i];
-  }
-
-  /// Fetch the next set of results in the background
-  Future<void> fetch() async {
-    if (hasMore) {
-      Iterable<T> results = await _next();
-      print("API STREAM FETCHED: $results");
-
-      // Do nothing if we get nothing
-      if (results.isEmpty) return;
-
-      _results.addAll(results);
-
-      // Update listener
-      this._cb();
-
-      return Future.value();
-    }
-  }
-
-  /// Returns the length of the stream in its current form.
-  ///
-  /// Note: This __will__ change if trying to access an index near or past
-  /// the end. See [setOnChanged()] for more info.
-  int get length => _results.length;
-
-  /// Clear the current cache of this stream and force a reload
-  Future<void> refresh() {
-    // Clear the current results
-    _results.clear();
-
-    // Reset the state
-    _maxCursor = 0;
-    isFetching = false;
-    hasMore = true;
-
-    // Alert listeners about the changes
-    this._cb();
-
-    return Future.value();
-  }
-
-  /// Attach a callback when the list updates.
-  ///
-  /// Since this is a networked-backed list, use this method to know when
-  /// the underlying list has been updated due to network requests.
-  ///
-  /// As an example, to have your view update whenever new items are added:
-  ///
-  /// ```dart
-  /// @override
-  /// void initState() {
-  ///   ApiStream<T> stream = ...;
-  ///   stream.setOnChanged(() => setState(() {}));
-  /// }
-  /// ```
-  void setOnChanged(void Function() cb) => this._cb = cb;
-
-  /// Transform this [ApiStream] using a mapping function
-  ///
-  /// In the event that you need an existing [ApiStream] to wrap a different
-  /// data structure (such as when converting [MusicResult] to a [VideoResult])
-  /// simply pass a mapping function that, given the original wrapped data
-  /// structure, generates the new data structure. This transformation is then
-  /// applied to every currently loaded result and kept in order to be used
-  /// when requesting the [next()] set of results.
-  ///
-  /// For an in-depth example, see [SoundGroup].
-  ApiStream<U> transform<U>(U Function(T) transformer) {
-    return ApiStream(count, (count, cursor) async {
-      final res = await _stream(count, cursor);
-      if (res == null) return Future.value(null);
-
-      // Map all of the stream
-      final trans = ApiResult<U>(
-          res.hasMore, res.nextCursor, res.results.map((e) => transformer(e)));
-      return Future.value(trans);
-    }, initialResults: _results.map((e) => transformer(e)).toList());
-  }
-
-  // Fetches the next set of `count` results.
-  Future<Iterable<T>> _next() async {
-    // Stop multiple requests / when no more videos are available
-    // TODO: Maybe use null or a tuple here to signal difference between requesting and done?
-    if (isFetching || !hasMore) return [];
-    isFetching = true;
-
-    ApiResult<T> r;
-    try {
-      r = await _stream(count, _maxCursor);
-      print("Next: $r");
-      _maxCursor = r.nextCursor;
-      hasMore = r.hasMore;
-    } catch (e) {
-      print("WARNING: Fetching failed with: $e");
-      print("WARNING: Failing silently...");
-    } finally {
-      isFetching = false;
-    }
-
-    // print("GOT NEXT CURSOR: $maxCursor");
-    return r.results;
-  }
-}
 
 /// Static class for making direct TT API requests.
 ///
@@ -359,7 +179,9 @@ class API {
           "minCursor": 0
         });
 
-        return _getVideos(url, count, cursor);
+        return _fetchResultsFormatted(url, cursor,
+            bodyParser: (body) => body["items"],
+            resultMapper: (e) => VideoResult.fromJson(e));
       });
 
   /// Get an [ApiStream]<[VideoResult]> of an [author]'s list of videos.
@@ -376,7 +198,9 @@ class API {
           "minCursor": 0
         });
 
-        return _getVideos(url, count, cursor);
+        return _fetchResultsFormatted(url, cursor,
+            bodyParser: (body) => body["items"],
+            resultMapper: (e) => VideoResult.fromJson(e));
       });
 
   /// Get an [ApiStream]<[VideoResult]> of an [author]'s liked videos.
@@ -396,7 +220,9 @@ class API {
           "minCursor": 0
         });
 
-        return _getVideos(url, count, cursor);
+        return _fetchResultsFormatted(url, cursor,
+            bodyParser: (body) => body["items"],
+            resultMapper: (e) => VideoResult.fromJson(e));
       });
 
   /// Get an [ApiStream]<[Comment]> of a [video]'s comments.
@@ -417,7 +243,11 @@ class API {
             },
             useMobile: false);
 
-        return _getCommentsOrReplies(url, count, maxCursor);
+        return _fetchResultsFormatted(url, maxCursor,
+            bodyParser: (body) => body["comments"],
+            resultMapper: (e) => Comment.fromJson(e),
+            infoParser: (json) =>
+                Tuple2(json["has_more"] == 1, json["cursor"]));
       });
 
   static ApiStream<Comment> getCommentReplyStream(Comment comment, int count) =>
@@ -437,7 +267,11 @@ class API {
             },
             useMobile: false);
 
-        return _getCommentsOrReplies(url, count, maxCursor);
+        return _fetchResultsFormatted(url, maxCursor,
+            bodyParser: (body) => body["comments"],
+            resultMapper: (e) => Comment.fromJson(e),
+            infoParser: (json) =>
+                Tuple2(json["has_more"] == 1, json["cursor"]));
       });
 
   static ApiStream<VideoResult> getVideosForMusic(Music m, int count) =>
@@ -452,11 +286,30 @@ class API {
           "minCursor": 0
         });
 
-        return _getVideosForMusic(url, count, maxCursor);
+        return _fetchResultsFormatted(url, maxCursor,
+            bodyParser: (body) => body["body"]["itemListData"],
+            resultMapper: (e) => VideoResult.fromMusicJson(e),
+            infoParser: (json) =>
+                Tuple2(json["body"]["hasMore"], json["body"]["maxCursor"]));
       });
 
-  static ApiStream<HashtagResult> getTrendingHashtags(int count) => ApiStream(
-      count, (count, maxCursor) => _getTrendingHashtag(count, maxCursor));
+  static ApiStream<HashtagResult> getTrendingHashtags(int count) =>
+      ApiStream(count, (count, maxCursor) {
+        String url = _getFormattedUrl("api/discover/challenge", {
+          "discoverType": 0,
+          "needItemList": false,
+          "keyWord": "",
+          "offset": maxCursor,
+          "count": count
+        });
+
+        // // TODO: How do we know that there aren't more?
+        return _fetchResultsFormatted(url, maxCursor,
+            bodyParser: (body) => body["challengeInfoList"],
+            resultMapper: (e) =>
+                HashtagResult.fromJson(e["challenge"], e["stats"]),
+            infoParser: (json) => Tuple2(false, json["offset"]));
+      });
 
   static ApiStream<VideoResult> getVideosForHashtag(
           HashtagResult ht, int count) =>
@@ -471,7 +324,11 @@ class API {
           "minCursor": 0
         });
 
-        return _getVideosForMusic(url, count, maxCursor);
+        return _fetchResultsFormatted(url, maxCursor,
+            bodyParser: (body) => body["body"]["itemListData"],
+            resultMapper: (element) => VideoResult.fromMusicJson(element),
+            infoParser: (json) =>
+                Tuple2(json["body"]["hasMore"], json["body"]["maxCursor"]));
       });
 
   /// Signs a URL using TT's obfuscated JS
@@ -489,92 +346,40 @@ class API {
     });
   }
 
-  /// Gets an [ApiResult] containing a set of hashtags that are currently trending
-  static Future<ApiResult<HashtagResult>> _getTrendingHashtag(
-      int count, int cursor) async {
-    String url = _getFormattedUrl("api/discover/challenge", {
-      "discoverType": 0,
-      "needItemList": false,
-      "keyWord": "",
-      "offset": cursor,
-      "count": count
-    });
+  /// Fetches data from a TT endpoint and formats it into an ApiResult
+  static Future<ApiResult<T>> _fetchResultsFormatted<T, U>(
+      String url, int cursor,
+      {List<U> Function(Map<String, dynamic> body) bodyParser,
+      T Function(U element) resultMapper,
+      Tuple2<bool, dynamic> Function(dynamic json) infoParser,
+      String moreKey = "hasMore",
+      String cursorKey = "maxCursor"}) async {
+    // First, get the content
+    Map<String, dynamic> asJson = await _fetchResults(url);
 
-    dynamic asJson = await _fetchResults(url);
-    List<dynamic> hashtags = asJson["challengeInfoList"];
-
-    int offset = int.tryParse(asJson["offset"]);
-
-    // TODO: How do we know that there isn't more?
-    return ApiResult(offset != 0 && offset != cursor, offset,
-        hashtags.map((h) => HashtagResult.fromJson(h)));
-  }
-
-  /// Gets an [ApiResult] containing a set of videos of max size [count] from
-  /// the [url] endpoint.
-  ///
-  /// A [cursor] value of `0` fetches from the start of the results.
-  ///
-  /// Any non-zero [cursor] specifies where to start the search from and is
-  /// part of the [ApiResult]. The [cursor] does not seem to have any obvious
-  /// pattern and, as such, should only be supplied from a previous [ApiRequest].
-  static Future<ApiResult<VideoResult>> _getVideos(
-      String url, int count, int cursor) async {
-    dynamic asJson = await _fetchResults(url);
-    List<dynamic> array = asJson["items"];
+    // Get the relevant field
+    List<U> body = bodyParser(asJson);
 
     // Short out if we get no results
-    if (array == null) return ApiResult(false, cursor, []);
+    if (body == null) return ApiResult(false, cursor, []);
 
-    bool hasMore = asJson["hasMore"];
-    int maxCursor = int.tryParse(asJson["maxCursor"]);
+    // Extract needed fields for ApiStream
+    Tuple2<bool, dynamic> info = infoParser != null
+        ? infoParser(asJson)
+        : Tuple2(asJson[moreKey], asJson[cursorKey]);
+    bool hasMore = info.item1;
+    dynamic maxCursor = info.item2;
+
+    // Coerce into an ApiResult
     return ApiResult(
-        hasMore, maxCursor, array.map((e) => VideoResult.fromJson(e)));
+        hasMore,
+        maxCursor is int ? maxCursor : int.tryParse(maxCursor),
+        body.map(resultMapper));
   }
-
-  static Future<ApiResult<Comment>> _getCommentsOrReplies(
-      String url, int count, int cursor) async {
-    dynamic asJson = await _fetchResults(url);
-    List<dynamic> array = asJson["comments"];
-
-    // Short out if we get no results
-    if (array == null) return ApiResult(false, cursor, []);
-
-    bool hasMore = asJson["has_more"] == 1;
-    int maxCursor = asJson["cursor"];
-    int total = asJson["total"];
-
-    return ApiResult(
-        hasMore, maxCursor, array.map((e) => Comment.fromJson(e, total)));
-  }
-
-  /// Gets an [ApiResult] containing a list of videos that use a given [Music] track
-  static Future<ApiResult<VideoResult>> _getVideosForMusic(
-      String url, int count, int cursor) async {
-    dynamic asJson = (await _fetchResults(url))["body"];
-    List<dynamic> array =
-        asJson["itemListData"]; // different from stock _getVideos
-
-    // Short out if we get no results
-    if (array == null) return ApiResult(false, cursor, []);
-
-    bool hasMore = asJson["hasMore"];
-    int maxCursor = int.tryParse(asJson["maxCursor"]);
-
-    return ApiResult(
-        hasMore, maxCursor, array.map((e) => VideoResult.fromMusicJson(e)));
-  }
-
-  /// NOT IMPLEMENTED
-  ///
-  /// Fetches a batch of commments from [url]. See [_getVideos()] for more
-  /// info.
-  // static Future<ApiResult<dynamic>> _getComments(
-  //     String url, int count, int cursor) async {
-  //   throw Exception("Not Implemented");
-  // }
 
   /// Fetches data from a TT endpoint
+  ///
+  /// Set [shouldPost] to `false` for a GET, and `true` for a POST
   static Future<dynamic> _fetchResults(String url,
       {bool shouldPost = false}) async {
     // Sign the url using TT JS
@@ -620,6 +425,7 @@ class API {
   /// Get a url with formatted [options]
   ///
   /// The endpoint is always assumed to start with https://m.tiktok.com/
+  /// Set [useMobile] to `false` for https://www.tiktok.com/
   static String _getFormattedUrl(String endpoint, Map<String, dynamic> options,
       {bool useMobile = true}) {
     String result = "https://${useMobile ? "m" : "www"}.tiktok.com/$endpoint/";

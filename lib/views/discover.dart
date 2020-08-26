@@ -1,4 +1,5 @@
 import 'package:clack/api.dart';
+import 'package:clack/api/api_stream.dart';
 import 'package:clack/api/hashtag_result.dart';
 import 'package:clack/api/video_result.dart';
 import 'package:clack/fragments/HashtagInfoFragment.dart';
@@ -91,21 +92,25 @@ class _DiscoverState extends State<Discover> {
                   padding: EdgeInsets.only(left: 10, right: 10, bottom: 10),
                   child: Row(children: [
                     GestureDetector(
-                        onTap: () => Navigator.of(context).pushNamed(
-                            VideoGroup.routeName,
-                            arguments: VideoGroupArguments(
-                                stream: _hashtagVideos[index],
-                                headerBuilder: () =>
-                                    HashtagInfoFragment(hashtag: ht))),
+                        onTap: () =>
+                            _handleOpenGroup(_hashtagVideos[index], ht),
                         child: CircleAvatar(
-                          child: Text("#"),
+                          backgroundImage: ht.profileThumb.toString().isNotEmpty
+                              ? NetworkImage(ht.profileThumb.toString())
+                              : null,
+                          child: ht.profileThumb.toString().isEmpty
+                              ? Text("#")
+                              : null,
                           radius: 20,
                         )),
                     SizedBox(width: 10),
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(ht.title, style: hashtagTextStyle),
+                        GestureDetector(
+                            onTap: () =>
+                                _handleOpenGroup(_hashtagVideos[index], ht),
+                            child: Text(ht.title, style: hashtagTextStyle)),
                         Text(
                           "Trending Hashtag",
                           style: subtextTextStyle,
@@ -158,6 +163,12 @@ class _DiscoverState extends State<Discover> {
               Divider()
             ]));
       }, childCount: 10));
+
+  void _handleOpenGroup(ApiStream<VideoResult> stream, HashtagResult ht) =>
+      Navigator.of(context).pushNamed(VideoGroup.routeName,
+          arguments: VideoGroupArguments(
+              stream: stream,
+              headerBuilder: () => HashtagInfoFragment(hashtag: ht)));
 
   Future<bool> _handleBack() {
     widget.setActive(VideoFeedActivePage.VIDEO);

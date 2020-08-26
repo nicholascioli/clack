@@ -1,3 +1,4 @@
+import 'package:clack/api/api_stream.dart';
 import 'package:clack/api/shared_types.dart';
 import 'package:clack/api/video_result.dart';
 import 'package:clack/utility.dart';
@@ -38,6 +39,9 @@ class _CommentsFragmentState extends State<CommentsFragment> {
     // Register handler for updating when comments arrive
     widget.comments.setOnChanged(() => setState(() {}));
 
+    // Start fetching comments
+    widget.comments.preload();
+
     super.initState();
   }
 
@@ -53,46 +57,52 @@ class _CommentsFragmentState extends State<CommentsFragment> {
             initialChildSize: 1.0,
             minChildSize: 0.5,
             builder: (context, scrollController) => Scaffold(
-                  appBar: AppBar(
-                    // We do not want a back button
-                    automaticallyImplyLeading: false,
+                appBar: AppBar(
+                  // We do not want a back button
+                  automaticallyImplyLeading: false,
 
-                    // Blend in with modal
-                    backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+                  // Blend in with modal
+                  backgroundColor: Theme.of(context).scaffoldBackgroundColor,
 
-                    // Center title
-                    centerTitle: true,
-                    title: Text(
-                        "${statToString(widget.comments[0] == null ? widget.initialCount : widget.comments[0].totalCount)} comments",
-                        style: titleStyle),
+                  // Center title
+                  centerTitle: true,
+                  title: Text("${statToString(widget.initialCount)} comments",
+                      style: titleStyle),
 
-                    // Close modal button
-                    actions: [
-                      IconButton(
-                        icon: Icon(Icons.close),
-                        onPressed: widget.onClose,
-                        color: titleStyle.color,
-                      )
-                    ],
-                  ),
-                  bottomSheet: _buildCommentInput(context),
-                  body: (widget.comments[0] == null)
-                      ? Container(
-                          child: Center(
-                          child: SpinKitCubeGrid(
-                              color:
-                                  Theme.of(context).textTheme.headline1.color),
-                        ))
-                      : CustomScrollView(
-                          shrinkWrap: true,
-                          controller: scrollController,
-                          slivers: [
-                              SliverList(
-                                  delegate: SliverChildBuilderDelegate(
-                                      (context, index) => _buildComment(
-                                          index, widget.comments[index])))
-                            ]),
-                )));
+                  // Close modal button
+                  actions: [
+                    IconButton(
+                      icon: Icon(Icons.close),
+                      onPressed: widget.onClose,
+                      color: titleStyle.color,
+                    )
+                  ],
+                ),
+                bottomSheet: _buildCommentInput(context),
+                body: (widget.comments.length == 0 &&
+                        widget.comments.isFetching)
+                    ? Container(
+                        child: Center(
+                        child: SpinKitCubeGrid(
+                            color: Theme.of(context).textTheme.headline1.color),
+                      ))
+                    : Padding(
+                        // TODO: Find out better padding for bottom bar
+                        padding: EdgeInsets.only(bottom: 60),
+                        child: Visibility(
+                            visible: widget.comments.length != 0,
+                            replacement: Center(child: Text("No comments")),
+                            child: CustomScrollView(
+                                shrinkWrap: true,
+                                controller: scrollController,
+                                slivers: [
+                                  SliverList(
+                                      delegate: SliverChildBuilderDelegate(
+                                          (context, index) => _buildComment(
+                                              index, widget.comments[index]),
+                                          childCount: widget.comments.length))
+                                ])),
+                      ))));
   }
 
   /// Builds the input area
@@ -133,9 +143,6 @@ class _CommentsFragmentState extends State<CommentsFragment> {
     TextStyle dateStyle = TextStyle(color: Colors.grey);
     TextStyle boldStyle = TextStyle(fontWeight: FontWeight.bold);
     TextStyle creatorStyle = TextStyle(color: Theme.of(context).accentColor);
-
-    // TODO: Show loading or something
-    if (comment == null) return null;
 
     var builder = () => Padding(
         padding: EdgeInsets.only(
@@ -225,13 +232,11 @@ class _CommentsFragmentState extends State<CommentsFragment> {
         TextStyle(color: Colors.grey, fontWeight: FontWeight.bold);
 
     // Get the AiStream of replies ready
-    if (comment != null && index >= replies.length) {
+    if (index >= replies.length) {
       replies.add(Tuple2(false, API.getCommentReplyStream(comment, 5)));
       replies[index].item2.autoFetch = false;
       replies[index].item2.setOnChanged(() => setState(() {}));
     }
-
-    if (comment == null) return Container();
 
     // Do not show the reply comment as a possible extra comment
     int replyCount =

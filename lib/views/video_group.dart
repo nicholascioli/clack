@@ -1,13 +1,9 @@
-import 'dart:async';
-
-import 'package:audioplayer/audioplayer.dart';
-import 'package:clack/api.dart';
+import 'package:clack/api/api_stream.dart';
 import 'package:clack/api/video_result.dart';
 import 'package:clack/fragments/GridFragment.dart';
 import 'package:clack/utility.dart';
 import 'package:clack/views/settings.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:share/share.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -20,7 +16,7 @@ class VideoGroupArguments {
 }
 
 class VideoGroup extends StatefulWidget {
-  static final routeName = "/audio_group";
+  static final routeName = "/video_group";
 
   @override
   _VideoGroupState createState() => _VideoGroupState();
@@ -65,12 +61,7 @@ class _VideoGroupState extends State<VideoGroup> {
                   : Share.share(getMusicShare(_videos[0].music,
                       _prefs.getBool(SettingsView.sharingShowInfo))))
         ]),
-        body: _videos[0] == null
-            ? Center(
-                child: SpinKitCubeGrid(
-                    color: Theme.of(context).textTheme.headline1.color),
-              )
-            : _buildPage());
+        body: _buildPage());
   }
 
   Widget _buildPage() => CustomScrollView(slivers: [
@@ -82,6 +73,6 @@ class _VideoGroupState extends State<VideoGroup> {
             stream: _videos,
             showPlayCount: false,
             showOriginal: true,
-            heroTag: "soundGroup")
+            heroTag: "videoGroup")
       ]);
 }

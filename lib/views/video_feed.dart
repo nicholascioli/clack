@@ -1,4 +1,5 @@
 import 'package:clack/api.dart';
+import 'package:clack/api/api_stream.dart';
 import 'package:clack/utility.dart';
 import 'package:clack/api/video_result.dart';
 import 'package:clack/views/discover.dart';
