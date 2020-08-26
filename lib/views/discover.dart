@@ -34,12 +34,13 @@ class _DiscoverState extends State<Discover> {
           if (!_hasInit) {
             _hasInit = true;
             _hashtags.results.forEach((key, ht) {
-              print("INDEX: $key");
               _hashtagVideos[key] = API.getVideosForHashtag(ht, 10);
               _hashtagVideos[key].setOnChanged(() => setState(() {}));
+              _hashtagVideos[key].preload();
             });
           }
         }));
+    _hashtags.preload();
 
     super.initState();
   }
@@ -58,7 +59,7 @@ class _DiscoverState extends State<Discover> {
             ],
             title: Text("Discover"),
           ),
-          body: _hashtags[0] == null
+          body: !_hashtags.hasLoaded
               ? Center(
                   child: SpinKitFadingGrid(
                       color: Theme.of(context).textTheme.headline1.color),
@@ -69,8 +70,9 @@ class _DiscoverState extends State<Discover> {
                         delegate: SliverChildListDelegate.fixed([
                       AspectRatio(
                           aspectRatio: 2,
-                          child: Image.network(
-                            _hashtags[0].profileLarger.toString(),
+                          child: FadeInImage.memoryNetwork(
+                            placeholder: kTransparentImage,
+                            image: _hashtags[0].profileLarger.toString(),
                             fit: BoxFit.fitWidth,
                           )),
                     ])),
@@ -118,14 +120,12 @@ class _DiscoverState extends State<Discover> {
                       ],
                     ),
                     Spacer(),
-                    ClipRRect(
-                        borderRadius: BorderRadius.circular(5),
-                        child: Container(
-                            color: Colors.blueGrey,
-                            child: Padding(
-                                padding: EdgeInsets.all(5),
-                                child: Text(statToString(ht.stats.videoCount),
-                                    style: TextStyle(color: Colors.white))))),
+                    Card(
+                        color: Colors.blueGrey,
+                        child: Padding(
+                            padding: EdgeInsets.all(5),
+                            child: Text(statToString(ht.stats.videoCount),
+                                style: TextStyle(color: Colors.white)))),
                   ])),
 
               // Show the list of videos
@@ -134,35 +134,48 @@ class _DiscoverState extends State<Discover> {
                   child: ListView.builder(
                       scrollDirection: Axis.horizontal,
                       shrinkWrap: true,
-                      itemBuilder: (innerContext, innerIndex) {
-                        final videos = _hashtagVideos[index];
+                      itemCount: !_hashtagVideos[index].hasMore
+                          ? _hashtagVideos[index].length
+                          : null, // Infinite list until we know the full size
+                      itemBuilder: (innerContext, innerIndex) =>
+                          _buildVideo(ht, _hashtagVideos[index], innerIndex))),
 
-                        return Padding(
-                            padding: EdgeInsets.only(
-                                left: (innerIndex == 0) ? 10 : 3),
-                            child: GestureDetector(
-                                onTap: () => Navigator.pushNamed(context, VideoFeed.routeName,
-                                    arguments: VideoFeedArgs(videos, innerIndex, null,
-                                        heroTag: ht.title)),
-                                child: Hero(
-                                    tag: "${ht.title}_video_page_$innerIndex",
-                                    child: Container(
-                                        color: Colors.black,
-                                        child: AspectRatio(
-                                            aspectRatio: 0.75,
-                                            child: FittedBox(
-                                                fit: BoxFit.fitWidth,
-                                                child: videos[innerIndex] == null
-                                                    ? Container()
-                                                    : FadeInImage.memoryNetwork(
-                                                        fadeInDuration: Duration(milliseconds: 300),
-                                                        placeholder: kTransparentImage,
-                                                        image: videos[innerIndex].video.dynamicCover.toString())))))));
-                      })),
+              // Bottom offset and divider
               SizedBox(height: 10),
               Divider()
             ]));
       }, childCount: 10));
+
+  /// Build a single video widget in the list
+  Widget _buildVideo(
+      HashtagResult ht, ApiStream<VideoResult> videos, int innerIndex) {
+    double aspectRatio = 0.75;
+
+    return Padding(
+        padding: EdgeInsets.only(left: (innerIndex == 0) ? 10 : 3),
+        child: GestureDetector(
+          onTap: () => Navigator.pushNamed(context, VideoFeed.routeName,
+              arguments:
+                  VideoFeedArgs(videos, innerIndex, null, heroTag: ht.title)),
+          child: Hero(
+              tag: "${ht.title}_video_page_$innerIndex",
+              child: Container(
+                  color: Colors.black,
+                  child: AspectRatio(
+                      aspectRatio: aspectRatio,
+                      child: FittedBox(
+                          fit: BoxFit.fitWidth,
+                          child: videos[innerIndex] == null
+                              ? Container()
+                              : FadeInImage.memoryNetwork(
+                                  fadeInDuration: Duration(milliseconds: 300),
+                                  placeholder: kTransparentImage,
+                                  image: videos[innerIndex]
+                                      .video
+                                      .dynamicCover
+                                      .toString()))))),
+        ));
+  }
 
   void _handleOpenGroup(ApiStream<VideoResult> stream, HashtagResult ht) =>
       Navigator.of(context).pushNamed(VideoGroup.routeName,

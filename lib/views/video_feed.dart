@@ -101,6 +101,7 @@ class _VideoFeedState extends State<VideoFeed> {
   /// we have switched to another page using the bottom navigation bar.
   bool _onVideoPage = true;
 
+  /// The tag to use for Hero animations
   String _heroTag = "";
 
   /// Needed for choosing video quality
@@ -134,6 +135,9 @@ class _VideoFeedState extends State<VideoFeed> {
 
     // Update view whenever new data from network
     this._videos.setOnChanged(() => setState(() {}));
+
+    // Start fetching immediately
+    this._videos.preload();
 
     // Return the view
     return (this._showUserInfo && this._onVideoPage)
@@ -179,7 +183,7 @@ class _VideoFeedState extends State<VideoFeed> {
         body: views[_activePage]());
   }
 
-  /// Builds just the [VideoPage] [ViewPager]
+  /// Builds just the [VideoPage]'s [ViewPager]
   Widget _buildVideoPager() => RefreshIndicator(
       onRefresh: () async => await _videos.refresh(),
       child: PageView.builder(
@@ -238,13 +242,14 @@ class _VideoFeedState extends State<VideoFeed> {
                 // If we have an action to do post-change, do so now
                 if (afterClick != null) afterClick();
               }),
-          _activePage == active
-              ? Divider(
-                  color: Theme.of(context).accentIconTheme.color,
-                  height: 2,
-                  thickness: 2,
-                )
-              : Container(height: 2)
+          Visibility(
+              visible: _activePage == active,
+              child: Divider(
+                color: Theme.of(context).accentIconTheme.color,
+                height: 2,
+                thickness: 2,
+              ),
+              replacement: Container(height: 2))
         ]));
 
     return BottomAppBar(
