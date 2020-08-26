@@ -33,6 +33,10 @@ Coming soon.
 * Browse trending hashtags
 * Browse videos by music
 * Browse videos by hashtag
+* Click on links in video description
+	* Duet links to original video
+	* Hashtags
+	* User @ mentions
 * View a video's comments
 	* View a comment's replies
 	* View the comment poster's User info
