@@ -157,7 +157,8 @@ class GridFragment extends StatelessWidget {
                     child: Padding(
                         padding: EdgeInsets.only(
                             left: 5, top: 5, bottom: 5, right: 10),
-                        child: Text("Original")),
+                        child: Text("Original",
+                            style: TextStyle(color: Colors.black))),
                   ),
                 )));
   }
