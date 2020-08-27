@@ -63,6 +63,7 @@ dev_dependencies:
 # Launch settings here
 flutter_native_splash:
   color: "#000000"
+  android_disable_fullscreen: true
 
 # Specify icon settings here
 flutter_icons:
