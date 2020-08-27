@@ -1,5 +1,6 @@
 import 'package:clack/api.dart';
 import 'package:clack/utility.dart';
+import 'package:clack/views/sign_in_webview.dart';
 import 'package:clack/views/video_feed.dart';
 import 'package:flutter/material.dart';
 
@@ -33,13 +34,14 @@ class NotificationView extends StatelessWidget {
                 Text("Messages and notifications will appear here"),
 
                 // Only show the log in button when not logged in
-                API.isLoggedIn()
-                    ? Container()
-                    : Padding(
+                Visibility(
+                    visible: !API.isLoggedIn(),
+                    child: Padding(
                         padding: EdgeInsets.only(top: 20),
                         child: RaisedButton(
                             child: Text("Sign in"),
-                            onPressed: () => showNotImplemented(context)))
+                            onPressed: () => Navigator.of(context)
+                                .pushNamed(SignInWebview.routeName))))
               ],
             ),
           ),
