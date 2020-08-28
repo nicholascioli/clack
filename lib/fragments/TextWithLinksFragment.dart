@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:clack/api/api_stream.dart';
 import 'package:clack/api/hashtag_result.dart';
 import 'package:clack/api/shared_types.dart';
@@ -36,7 +38,9 @@ class TextWithLinksFragment extends StatelessWidget {
   MapEntry<int, TextSpan> _buildHyperlink(int index, TextExtra info) {
     final int lastEnd = index != 0 ? videoResult.textExtra[index - 1].end : 0;
     final bool isDuet = info.awemeId != null && info.awemeId.isNotEmpty;
-    final String innerText = videoResult.desc.substring(info.start, info.end);
+    final String innerText = videoResult.desc
+        .substring(info.start, min(info.end, videoResult.desc.length));
+
     final duetStyle =
         TextStyle(color: Colors.black, fontWeight: FontWeight.bold);
 
