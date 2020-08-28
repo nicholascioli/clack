@@ -71,24 +71,6 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> {
-  final GlobalKey<NavigatorState> _navigatorKey =
-      new GlobalKey<NavigatorState>();
-  LinkHandler _handler;
-
-  @override
-  void initState() {
-    _handler = LinkHandler(navigatorKey: _navigatorKey);
-
-    super.initState();
-  }
-
-  @override
-  void dispose() {
-    _handler.dispose();
-
-    super.dispose();
-  }
-
   @override
   Widget build(BuildContext context) {
     return new DynamicTheme(
@@ -106,10 +88,11 @@ class _MyAppState extends State<MyApp> {
             iconColor:
                 getThemeColor(widget.prefs, SettingsView.themeIconColor)),
         themedWidgetBuilder: (context, theme) => MaterialApp(
-            navigatorKey: _navigatorKey,
             title: 'Clack',
-            initialRoute: VideoFeed.routeName,
+            initialRoute: LinkHandler.routeName,
             routes: {
+              LinkHandler.routeName: (ctx) =>
+                  LinkHandler(initialWidget: VideoFeed()),
               VideoFeed.routeName: (ctx) => VideoFeed(),
               FullImage.routeName: (ctx) => FullImage(),
               VideoGroup.routeName: (ctx) => VideoGroup(),
