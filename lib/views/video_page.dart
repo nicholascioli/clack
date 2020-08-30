@@ -4,10 +4,12 @@ import 'package:clack/api/shared_types.dart';
 import 'package:clack/fragments/CommentsFragment.dart';
 import 'package:clack/fragments/MusicPlayerFragment.dart';
 import 'package:clack/fragments/TextWithLinksFragment.dart';
+import 'package:clack/generated/locale_keys.g.dart';
 import 'package:clack/utility.dart';
 import 'package:clack/api/video_result.dart';
 import 'package:clack/views/sign_in_webview.dart';
 import 'package:clack/views/video_group.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:icon_shadow/icon_shadow.dart';
 import 'package:like_button/like_button.dart';
@@ -86,6 +88,14 @@ class _VideoPageState extends State<VideoPage> with TickerProviderStateMixin {
           blurRadius: 3.0,
           color: Color.fromARGB(255, 0, 0, 0),
         ),
+      ]);
+
+  /// Text style of the date
+  final TextStyle _dateTextStyle = TextStyle(
+      color: Colors.white,
+      fontSize: 12,
+      shadows: [
+        Shadow(offset: Offset(2.0, 2.0), blurRadius: 3.0, color: Colors.black)
       ]);
 
   /// Text style of the text under every button
@@ -258,10 +268,33 @@ class _VideoPageState extends State<VideoPage> with TickerProviderStateMixin {
                   if (widget.showUserPage)
                     DefaultTabController.of(context).index = 1;
                 },
-                child: Text(
-                  "@${widget.videoInfo.author.uniqueId}",
-                  style: _usernameTextStyle,
-                )),
+                child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Text(
+                        LocaleKeys.user_unique_id,
+                        style: _usernameTextStyle,
+                      ).tr(args: [widget.videoInfo.author.uniqueId]),
+
+                      // Optional verified check
+                      Padding(
+                          padding: EdgeInsets.only(left: 5),
+                          child: Visibility(
+                              visible: widget.videoInfo.author.verified,
+                              replacement: Text("-", style: _dateTextStyle),
+                              child: IconShadowWidget(
+                                  Icon(Icons.check_circle,
+                                      color: Theme.of(context).accentColor),
+                                  shadowColor: Colors.black))),
+
+                      // Create date
+                      Padding(
+                          padding: EdgeInsets.only(left: 5),
+                          child: Text(
+                              getDelta(context, widget.videoInfo.createTime),
+                              style: _dateTextStyle))
+                    ])),
             Visibility(
                 visible: widget.videoInfo.desc.isNotEmpty,
                 child: Padding(

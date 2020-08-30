@@ -202,7 +202,7 @@ class _CommentsFragmentState extends State<CommentsFragment> {
                                     children: [
                                       TextSpan(
                                           text:
-                                              " ${_getDelta(comment.createTime)}",
+                                              " ${getDelta(context, comment.createTime)}",
                                           style: dateStyle),
                                     ]),
                                 softWrap: true),
@@ -334,20 +334,4 @@ class _CommentsFragmentState extends State<CommentsFragment> {
               return Future.value();
             },
           ));
-
-  String _getDelta(DateTime created) {
-    Duration delta = DateTime.now().difference(created);
-    var formatter = new DateFormat.yMd(context.locale.languageCode);
-
-    if (delta.inDays > 30)
-      return formatter.format(created);
-    else if (delta.inDays != 0)
-      return LocaleKeys.day_suffix.tr(args: [delta.inDays.toString()]);
-    else if (delta.inHours != 0)
-      return LocaleKeys.hour_suffix.tr(args: [delta.inHours.toString()]);
-    else if (delta.inMinutes != 0)
-      return LocaleKeys.minute_suffix.tr(args: [delta.inMinutes.toString()]);
-    else
-      return LocaleKeys.second_suffix.tr(args: [delta.inSeconds.toString()]);
-  }
 }

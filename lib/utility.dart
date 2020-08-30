@@ -88,3 +88,20 @@ Color getThemeColor(SharedPreferences prefs, String key) {
 /// IDs, with the nested ID being the correct ID to use for all requests
 String getVideoId(VideoResult videoResult) =>
     videoResult.video.id != "awesome" ? videoResult.video.id : videoResult.id;
+
+/// Get a string representation of a time delta
+String getDelta(BuildContext context, DateTime created) {
+  Duration delta = DateTime.now().difference(created);
+  var formatter = new DateFormat.yMd(context.locale.languageCode);
+
+  if (delta.inDays > 30)
+    return formatter.format(created);
+  else if (delta.inDays != 0)
+    return LocaleKeys.day_suffix.tr(args: [delta.inDays.toString()]);
+  else if (delta.inHours != 0)
+    return LocaleKeys.hour_suffix.tr(args: [delta.inHours.toString()]);
+  else if (delta.inMinutes != 0)
+    return LocaleKeys.minute_suffix.tr(args: [delta.inMinutes.toString()]);
+  else
+    return LocaleKeys.second_suffix.tr(args: [delta.inSeconds.toString()]);
+}
