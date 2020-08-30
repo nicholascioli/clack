@@ -28,7 +28,7 @@ void main() {
   // Run the app (with splash screen while loading)
   return runApp(Phoenix(
       child: EasyLocalization(
-          supportedLocales: [Locale("en", "US")],
+          supportedLocales: [Locale("en", "US"), Locale("it", "IT")],
           path: "i18n",
           fallbackLocale: Locale("en", "US"),
           preloaderColor: Colors.black,
