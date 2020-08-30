@@ -56,7 +56,7 @@ class _ProfileViewState extends State<ProfileView> {
                 Text(LocaleKeys.sign_in_message).tr(),
                 SizedBox(height: 20),
                 RaisedButton(
-                    child: Text(LocaleKeys.sign_in),
+                    child: Text(LocaleKeys.sign_in).tr(),
                     onPressed: () =>
                         Navigator.pushNamed(context, SignInWebview.routeName))
               ],
