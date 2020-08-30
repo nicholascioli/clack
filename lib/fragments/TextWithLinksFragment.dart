@@ -75,8 +75,7 @@ class TextWithLinksFragment extends StatelessWidget {
                                     initialHashtag: ht,
                                     initialIsActual: true,
                                   ),
-                              getShare: (shareExtra) =>
-                                  getHashtagShare(ht, shareExtra)));
+                              getShare: () => getHashtagShare(ht)));
                     } else {
                       Navigator.of(context).pushNamed(UserInfo.routeName,
                           arguments: UserInfoArgs(

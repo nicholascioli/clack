@@ -38,7 +38,7 @@ class API {
 
   static Cookie _loginToken;
   static String _webId;
-  static String _lang = "en";
+  static String _lang;
   static AuthorResult _userInfo = _userDefaults; // Initialize as anonymous user
 
   // We need a [HeadlessInAppWebView] in order to perform url signing because
@@ -46,20 +46,21 @@ class API {
   static final HeadlessInAppWebView _webView = HeadlessInAppWebView(
       initialUrl: "", initialHeaders: {}, initialOptions: webViewOptions);
 
-  static Future<void> init() async {
+  static Future<void> init(String languageCode) async {
     const FlutterSecureStorage storage = FlutterSecureStorage();
 
     String token = await storage.read(key: "TT_TOKEN");
     String webId = await storage.read(key: "TT_WEBID");
     String username = await storage.read(key: "TT_USER");
-    String lang = await storage.read(key: "TT_LANG");
+
+    // Set the language for the current session
+    _lang = languageCode;
 
     // Only initialize if not null
-    if (token != null && username != null && webId != null && lang != null) {
+    if (token != null && username != null && webId != null) {
       _loginToken = Cookie(name: "sid_guard", value: token);
       _webId = webId;
       _userInfo = await API.getAuthorInfo(Author(uniqueId: username));
-      _lang = lang;
     }
 
     return Future.value();
@@ -78,7 +79,6 @@ class API {
     _loginToken = null;
     _webId = null;
     _userInfo = _userDefaults;
-    _lang = "en";
 
     return Future.value();
   }
@@ -91,13 +91,11 @@ class API {
     storage.write(key: "TT_TOKEN", value: token.value.toString());
     storage.write(key: "TT_WEBID", value: webId);
     storage.write(key: "TT_USER", value: username);
-    storage.write(key: "TT_LANG", value: lang);
 
     // Update locals
     _loginToken = token;
     _webId = webId;
     _userInfo = await API.getAuthorInfo(Author(uniqueId: username));
-    _lang = lang;
 
     return Future.value();
   }
@@ -459,7 +457,7 @@ class API {
 
     // Apply all of the options
     result += options.entries.fold(
-        "?appId=1233&language=$_lang",
+        "?appId=1233&language=$_lang&lang=$_lang",
         (previousValue, element) =>
             "$previousValue&${element.key}=${element.value.toString()}");
 

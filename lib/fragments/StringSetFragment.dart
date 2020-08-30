@@ -1,3 +1,5 @@
+import 'package:clack/generated/locale_keys.g.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 
 class StringSetFragment extends StatefulWidget {
@@ -47,12 +49,12 @@ class _StringSetFragmentState extends State<StringSetFragment> {
       ),
       actions: <Widget>[
         new FlatButton(
-            child: const Text('Cancel'),
+            child: const Text(LocaleKeys.cancel).tr(),
             onPressed: () {
               Navigator.pop(context, "");
             }),
         new FlatButton(
-            child: const Text('Save'),
+            child: const Text(LocaleKeys.accept).tr(),
             onPressed: () {
               Navigator.pop(context, _controller.value.text);
             }),

@@ -2,19 +2,19 @@ import 'package:clack/api.dart';
 import 'package:clack/api/api_stream.dart';
 import 'package:clack/api/author_result.dart';
 import 'package:clack/fragments/GridFragment.dart';
+import 'package:clack/generated/locale_keys.g.dart';
 import 'package:clack/views/full_image.dart';
 import 'package:clack/api/shared_types.dart';
 import 'package:clack/utility.dart';
 import 'package:clack/api/video_result.dart';
-import 'package:clack/views/settings.dart';
 import 'package:clack/views/video_feed.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:extended_tabs/extended_tabs.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:share/share.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class UserInfoArgs {
@@ -92,9 +92,6 @@ class _UserInfoState extends State<UserInfo>
   /// Prepends actions from [widget.parentActions]
   List<Widget> _actions;
 
-  /// The preferences for this app
-  SharedPreferences _prefs;
-
   @override
   void initState() {
     super.initState();
@@ -119,21 +116,9 @@ class _UserInfoState extends State<UserInfo>
       _actions.add(IconButton(
           icon: Icon(Icons.share),
           onPressed: () => _authorResult.then((authorResult) {
-                Share.share(
-                    getAuthorShare(authorResult,
-                        _prefs.getBool(SettingsView.sharingShowInfo)),
-                    subject:
-                        "Check out @${authorResult.user.uniqueId} TikTok!");
+                Share.share(getAuthorShare(authorResult));
               })));
     }
-
-    // Get the prefs
-    SharedPreferences.getInstance().then((value) {
-      // Do nothing if we died early
-      if (!mounted) return;
-
-      setState(() => _prefs = value);
-    });
   }
 
   @override
@@ -214,8 +199,9 @@ class _UserInfoState extends State<UserInfo>
                                                   color: Theme.of(context)
                                                       .accentColor),
                                               SizedBox(width: 5),
-                                              Text("verified account",
-                                                  style: softTextStyle)
+                                              Text(LocaleKeys.account_verified,
+                                                      style: softTextStyle)
+                                                  .tr()
                                             ])),
                                         Spacer()
                                       ])
@@ -226,8 +212,9 @@ class _UserInfoState extends State<UserInfo>
                                 Row(
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
-                                    Text("@${result.user.uniqueId}",
-                                        style: userTextStyle)
+                                    Text(LocaleKeys.user_unique_id,
+                                            style: userTextStyle)
+                                        .tr(args: [result.user.uniqueId])
                                   ],
                                 ),
 
@@ -240,13 +227,15 @@ class _UserInfoState extends State<UserInfo>
                                     _buildStatsColumn(
                                         result,
                                         result.stats.followingCount,
-                                        "Following"),
+                                        LocaleKeys.user_following),
                                     _buildStatsColumn(
                                         result,
                                         result.stats.followerCount,
-                                        "Followers"),
+                                        LocaleKeys.user_followers),
                                     _buildStatsColumn(
-                                        result, result.stats.heart, "Hearts")
+                                        result,
+                                        result.stats.heart,
+                                        LocaleKeys.user_hearts)
                                   ],
                                 ),
 
@@ -263,7 +252,9 @@ class _UserInfoState extends State<UserInfo>
                                                       onPressed: () =>
                                                           showNotImplemented(
                                                               context),
-                                                      child: Text("Message")),
+                                                      child: Text(LocaleKeys
+                                                              .send_message)
+                                                          .tr()),
                                                   OutlineButton(
                                                     onPressed: () =>
                                                         showNotImplemented(
@@ -285,7 +276,9 @@ class _UserInfoState extends State<UserInfo>
                                                             setState(() =>
                                                                 _isFollowing =
                                                                     value)),
-                                                    child: Text("Follow")),
+                                                    child: Text(LocaleKeys
+                                                            .label_follow)
+                                                        .tr()),
                                               ],
                                             ),
                                             visible: _isFollowing))
@@ -386,8 +379,10 @@ class _UserInfoState extends State<UserInfo>
                                       stream: _authorFavoritedVideos,
                                       count: result.stats.diggCount,
                                       emptyMessage: widget.args.isCurrentUser
-                                          ? "Liked videos will show up here."
-                                          : "@${result.user.uniqueId} has hidden their liked videos.",
+                                          ? LocaleKeys.user_empty_liked_videos
+                                              .tr()
+                                          : LocaleKeys.user_hidden_liked_videos
+                                              .tr(args: [result.user.uniqueId]),
                                       heroTag: "likedVideos")
                                 ])));
                   } else {
@@ -406,13 +401,13 @@ class _UserInfoState extends State<UserInfo>
       Column(
         children: [
           Text(
-            statToString(stat),
+            statToString(context).format(stat),
             style: statsTextStyle,
           ),
           Text(
             lowerText,
             style: softTextStyle,
-          )
+          ).tr()
         ],
       );
 }

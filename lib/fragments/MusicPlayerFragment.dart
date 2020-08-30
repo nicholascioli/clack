@@ -1,7 +1,10 @@
 import 'dart:async';
 
 import 'package:audioplayer/audioplayer.dart';
+import 'package:clack/api.dart';
 import 'package:clack/api/shared_types.dart';
+import 'package:clack/generated/locale_keys.g.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:icon_shadow/icon_shadow.dart';
 
@@ -98,18 +101,16 @@ class _MusicPlayerFragmentState extends State<MusicPlayerFragment> {
                                 style: textStyle,
                               ),
                               Text(
-                                "${widget.musicInfo.videoCount ?? "?"} video(s)",
+                                LocaleKeys.video_count,
                                 style: textStyle,
-                              )
+                              ).plural(widget.musicInfo.videoCount ?? 0)
                             ]),
-                        RaisedButton(
-                            child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Icon(Icons.bookmark_border),
-                                  Text("Add to Favorites")
-                                ]),
-                            onPressed: () => showNotImplemented(context))
+                        Visibility(
+                            visible: API.isLoggedIn(),
+                            child: RaisedButton.icon(
+                                icon: Icon(Icons.bookmark_border),
+                                label: Text(LocaleKeys.favorites_add).tr(),
+                                onPressed: () => showNotImplemented(context)))
                       ],
                     ),
                   ))

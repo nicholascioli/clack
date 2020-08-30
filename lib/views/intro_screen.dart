@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 
 /// An intro screen to use when first opening the app
 class IntroScreen extends StatefulWidget {
-  final Future<Widget> Function() nextScreenBuilder;
+  final Future<Widget> Function(BuildContext context) nextScreenBuilder;
   final Color color;
 
   const IntroScreen({@required this.nextScreenBuilder, @required this.color});
@@ -21,7 +21,7 @@ class _IntroScreenState extends State<IntroScreen>
   @override
   void initState() {
     // Set up view
-    _future = widget.nextScreenBuilder();
+    _future = widget.nextScreenBuilder(context);
 
     // Kill self after future finishes
     _future.then((value) => setState(() => _next = value));

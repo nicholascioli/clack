@@ -163,7 +163,11 @@ class _VideoFeedState extends State<VideoFeed> {
 
   /// Generates the multi-page left tab
   Widget _buildVideoWithBar() {
-    final cb = (v) => setState(() => _activePage = v);
+    final cb = (v) => setState(() {
+          _activePage = v;
+          // Disable tabbing if not on the main page
+          this._onVideoPage = _activePage == VideoFeedActivePage.VIDEO;
+        });
     final views = Map.from({
       VideoFeedActivePage.VIDEO: () => _buildVideoPager(),
       VideoFeedActivePage.SEARCH: () => Discover(cb),

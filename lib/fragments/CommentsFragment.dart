@@ -1,8 +1,10 @@
 import 'package:clack/api/api_stream.dart';
 import 'package:clack/api/shared_types.dart';
 import 'package:clack/api/video_result.dart';
+import 'package:clack/generated/locale_keys.g.dart';
 import 'package:clack/utility.dart';
 import 'package:clack/views/user_info.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:intl/intl.dart';
@@ -66,8 +68,9 @@ class _CommentsFragmentState extends State<CommentsFragment> {
 
                   // Center title
                   centerTitle: true,
-                  title: Text("${statToString(widget.initialCount)} comments",
-                      style: titleStyle),
+                  title: Text(LocaleKeys.comment_count, style: titleStyle)
+                      .plural(widget.initialCount,
+                          format: statToString(context)),
 
                   // Close modal button
                   actions: [
@@ -91,7 +94,9 @@ class _CommentsFragmentState extends State<CommentsFragment> {
                         padding: EdgeInsets.only(bottom: 60),
                         child: Visibility(
                             visible: widget.comments.length != 0,
-                            replacement: Center(child: Text("No comments")),
+                            replacement: Center(
+                                child:
+                                    Text(LocaleKeys.comment_count).plural(0)),
                             child: CustomScrollView(
                                 shrinkWrap: true,
                                 controller: scrollController,
@@ -123,7 +128,8 @@ class _CommentsFragmentState extends State<CommentsFragment> {
                 textInputAction: TextInputAction.send,
                 focusNode: _textFocus,
                 decoration: InputDecoration(
-                    border: InputBorder.none, hintText: "Say something..."),
+                    border: InputBorder.none,
+                    hintText: LocaleKeys.input_hint.tr()),
               )),
               IconButton(
                 icon: Icon(Icons.alternate_email),
@@ -180,7 +186,9 @@ class _CommentsFragmentState extends State<CommentsFragment> {
                                                 widget.owner.author.uniqueId
                                             ? TextSpan(text: " - ", children: [
                                                 TextSpan(
-                                                    text: "Creator",
+                                                    text: LocaleKeys
+                                                        .comment_owner
+                                                        .tr(),
                                                     style: creatorStyle)
                                               ])
                                             : TextSpan()
@@ -208,7 +216,7 @@ class _CommentsFragmentState extends State<CommentsFragment> {
                     isLiked ? Icons.favorite : Icons.favorite_border,
                     color: isLiked ? Colors.red : Colors.grey),
                 countBuilder: (int count, bool isLiked, String text) {
-                  return Text(statToString(count),
+                  return Text(statToString(context).format(count),
                       style: TextStyle(color: Colors.grey));
                 },
                 likeCountAnimationType: LikeCountAnimationType.none,
@@ -295,8 +303,13 @@ class _CommentsFragmentState extends State<CommentsFragment> {
                               child: RichText(
                                   text: TextSpan(
                                       text: !showReplies
-                                          ? "View replies (${comment.replyCommentTotal})"
-                                          : "View more (${comment.replyCommentTotal - currentReplies.length})",
+                                          ? LocaleKeys.comment_show_replies
+                                              .plural(comment.replyCommentTotal,
+                                                  format: statToString(context))
+                                          : LocaleKeys.comment_show_more.plural(
+                                              comment.replyCommentTotal -
+                                                  currentReplies.length,
+                                              format: statToString(context)),
                                       children: [
                                         WidgetSpan(
                                             alignment:
@@ -324,17 +337,17 @@ class _CommentsFragmentState extends State<CommentsFragment> {
 
   String _getDelta(DateTime created) {
     Duration delta = DateTime.now().difference(created);
-    var formatter = new DateFormat.yMd();
+    var formatter = new DateFormat.yMd(context.locale.languageCode);
 
     if (delta.inDays > 30)
       return formatter.format(created);
     else if (delta.inDays != 0)
-      return "${delta.inDays}d";
+      return LocaleKeys.day_suffix.tr(args: [delta.inDays.toString()]);
     else if (delta.inHours != 0)
-      return "${delta.inHours}h";
+      return LocaleKeys.hour_suffix.tr(args: [delta.inHours.toString()]);
     else if (delta.inMinutes != 0)
-      return "${delta.inMinutes}m";
+      return LocaleKeys.minute_suffix.tr(args: [delta.inMinutes.toString()]);
     else
-      return "${delta.inSeconds}s";
+      return LocaleKeys.second_suffix.tr(args: [delta.inSeconds.toString()]);
   }
 }

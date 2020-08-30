@@ -125,7 +125,7 @@ class _LinkHandlerState extends State<LinkHandler> {
                 VideoGroupArguments(
                   stream: API.getVideosForMusic(m, 20),
                   headerBuilder: () => MusicPlayerFragment(musicInfo: m),
-                  getShare: (shareExtra) => getMusicShare(m, shareExtra),
+                  getShare: () => getMusicShare(m),
                 ));
             break;
           }
@@ -144,7 +144,7 @@ class _LinkHandlerState extends State<LinkHandler> {
                     stream: API.getVideosForHashtag(ht, 20),
                     headerBuilder: () => HashtagInfoFragment(
                         initialHashtag: ht, initialIsActual: true),
-                    getShare: (shareExtra) => getHashtagShare(ht, shareExtra)));
+                    getShare: () => getHashtagShare(ht)));
 
             break;
           }

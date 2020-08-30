@@ -1,6 +1,8 @@
 import 'package:clack/api/api_stream.dart';
 import 'package:clack/api/video_result.dart';
+import 'package:clack/generated/locale_keys.g.dart';
 import 'package:clack/views/video_feed.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:icon_shadow/icon_shadow.dart';
@@ -28,7 +30,7 @@ class GridFragment extends StatelessWidget {
       this.count,
       this.asSliver = false,
       this.showUserInfo = true,
-      this.emptyMessage = "Nothing to see here...",
+      this.emptyMessage,
       this.showPlayCount = true,
       this.showOriginal = false,
       this.heroTag = "gridFragment"});
@@ -53,7 +55,8 @@ class GridFragment extends StatelessWidget {
     // If we have nothing to show, show the empty message
     if ((count != null && count < 1) ||
         (stream.length == 0 && stream.hasMore == false)) {
-      return _wrap(Center(child: Text(emptyMessage)));
+      return _wrap(
+          Center(child: Text(emptyMessage ?? LocaleKeys.empty_message.tr())));
     }
 
     final gridDelegate = SliverGridDelegateWithFixedCrossAxisCount(
@@ -101,13 +104,13 @@ class GridFragment extends StatelessWidget {
                                   .dynamicCover
                                   .toString()))))),
           // Optional play count
-          showPlayCount ? _playCount(index) : Container(),
+          showPlayCount ? _playCount(ctx, index) : Container(),
           showOriginal ? _originalText(index) : Container()
         ]));
   }
 
   /// Show a play count
-  Widget _playCount(int index) {
+  Widget _playCount(BuildContext ctx, int index) {
     /// Text style for the play count overlay on each video thumbnail
     final TextStyle _playCountTextStyle =
         TextStyle(color: Colors.white, fontSize: 15, shadows: [
@@ -133,7 +136,7 @@ class GridFragment extends StatelessWidget {
                       shadowColor: Colors.black,
                     ),
                     Text(
-                      statToString(stream[index].stats.playCount),
+                      statToString(ctx).format(stream[index].stats.playCount),
                       style: _playCountTextStyle,
                     )
                   ])));
@@ -157,8 +160,9 @@ class GridFragment extends StatelessWidget {
                     child: Padding(
                         padding: EdgeInsets.only(
                             left: 5, top: 5, bottom: 5, right: 10),
-                        child: Text("Original",
-                            style: TextStyle(color: Colors.black))),
+                        child: Text(LocaleKeys.label_original,
+                                style: TextStyle(color: Colors.black))
+                            .tr()),
                   ),
                 )));
   }

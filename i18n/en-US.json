@@ -1,0 +1,83 @@
+{
+	"comment_count": {
+		"zero": "No comments",
+		"one": "{} comment",
+		"many": "{} comments",
+		"other": "{} comments"
+	},
+	"comment_owner": "Creator",
+	"comment_show_replies": {
+		"other": "View replies ({})"
+	},
+	"comment_show_more": {
+		"other": "View more ({})"
+	},
+
+	"page_discover": "Discover",
+	"page_notifications": "Notifications",
+	"page_profile": "Profile",
+	"page_settings": "Settings",
+
+	"hashtag_trending": "Trending Hashtag",
+
+	"notifications_empty": "Messages and notifications will appear here",
+
+	"user_empty_liked_videos": "Liked videos will show up here",
+	"user_hidden_liked_videos": "@{} has hidden their liked videos",
+	"user_following": "Following",
+	"user_followers": "Followers",
+	"user_hearts": "Hearts",
+	"user_unique_id": "@{}",
+
+	"settings_best_quality": "Always use best quality",
+	"settings_best_quality_desc": "This may cause video stuttering on slow connections.",
+	"settings_dark_mode": "Dark mode",
+	"settings_dark_mode_desc": "Save my retinas!",
+	"settings_color_primary": "Primary color",
+	"settings_color_primary_desc": "Color to use for buttons, app bars, and themed text.",
+	"settings_color_bottom_bar": "Bottom Bar color",
+	"settings_color_bottom_bar_desc": "Color to use for the bottom bar.",
+	"settings_color_icon": "Bottom Bar Icon Color",
+	"settings_color_icon_desc": "Color to use for the icons in the bottom bar.",
+	"settings_language": "Language",
+	"settings_reset": "Reset to Default",
+	"settings_reset_desc": "Clear all user settings. (Note: This will NOT log you out.)",
+	"settings_user_agent": "User Agent",
+	"settings_section_account": "Account",
+	"settings_section_advanced": "Advanced",
+	"settings_section_theme": "Theme",
+	"settings_section_video": "Video",
+
+	"video_count": {
+		"zero": "No videos",
+		"one": "{} video",
+		"many": "{} videos",
+		"other": "{} videos"
+	},
+
+	"account_verified": "verified account",
+	"favorites_add": "Add to favorites",
+	"empty_message": "Nothing to see here...",
+	"input_hint": "Say something...",
+	"label_color_selected": "Selected Color",
+	"label_follow": "Follow",
+	"label_original": "Original",
+	"not_implemented": "NOT IMPLEMENTED",
+	"not_implemented_msg": "This feature will (maybe) be added at a later date.",
+	"reset_warning": "Are you sure that you wish to clear the current settings? This will not log you out of your account.",
+	"send_message": "Message",
+	"sign_in": "Sign In",
+	"sign_in_message": "Sign in to view your account",
+	"sign_in_success": "You are now logged in. Press OK to reload.",
+	"sign_out": "Sign Out",
+	"sign_out_warning": "Are you sure that you want to sign out? After signing out, the app will reload.",
+
+	"day_suffix": "{}d",
+	"hour_suffix": "{}h",
+	"minute_suffix": "{}m",
+	"second_suffix": "{}s",
+
+	"accept": "OK",
+	"cancel": "Cancel",
+	"success": "Success!"
+}
