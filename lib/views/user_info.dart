@@ -187,26 +187,6 @@ class _UserInfoState extends State<UserInfo>
                                   Spacer()
                                 ]),
 
-                                // Optional verified text
-                                (result.user.verified
-                                    ? Row(children: [
-                                        Spacer(),
-                                        Padding(
-                                            padding: EdgeInsets.only(
-                                                top: 10, bottom: 5),
-                                            child: Row(children: [
-                                              Icon(Icons.check_circle,
-                                                  color: Theme.of(context)
-                                                      .accentColor),
-                                              SizedBox(width: 5),
-                                              Text(LocaleKeys.account_verified,
-                                                      style: softTextStyle)
-                                                  .tr()
-                                            ])),
-                                        Spacer()
-                                      ])
-                                    : Container()),
-
                                 // The username
                                 SizedBox(height: 10),
                                 Row(
@@ -214,7 +194,17 @@ class _UserInfoState extends State<UserInfo>
                                   children: [
                                     Text(LocaleKeys.user_unique_id,
                                             style: userTextStyle)
-                                        .tr(args: [result.user.uniqueId])
+                                        .tr(args: [result.user.uniqueId]),
+
+                                    // Optional verified checkmark
+                                    Visibility(
+                                      visible: result.user.verified,
+                                      child: Padding(
+                                          padding: EdgeInsets.only(left: 5),
+                                          child: Icon(Icons.check_circle,
+                                              color: Theme.of(context)
+                                                  .accentColor)),
+                                    )
                                   ],
                                 ),
 

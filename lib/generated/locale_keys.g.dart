@@ -36,7 +36,6 @@ abstract class  LocaleKeys {
   static const settings_section_theme = 'settings_section_theme';
   static const settings_section_video = 'settings_section_video';
   static const video_count = 'video_count';
-  static const account_verified = 'account_verified';
   static const favorites_add = 'favorites_add';
   static const empty_message = 'empty_message';
   static const input_hint = 'input_hint';
