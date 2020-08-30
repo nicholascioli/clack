@@ -65,9 +65,9 @@ Coming soon.
 	* Share a video
 	* Share a videos by music track
 * Change app settings
+	* Change language (if supported)
 	* Change app theme colors
 	* Enable / disable always HD videos
 	* Change User-Agent for API requests (Placeholder)
-	* Change link sharing to include extra info (e.g. video title, user name, etc.)
 
 More to (hopefully) come!
