@@ -3,9 +3,11 @@ import 'package:clack/api/api_stream.dart';
 import 'package:clack/api/hashtag_result.dart';
 import 'package:clack/api/video_result.dart';
 import 'package:clack/fragments/HashtagInfoFragment.dart';
+import 'package:clack/generated/locale_keys.g.dart';
 import 'package:clack/utility.dart';
 import 'package:clack/views/video_feed.dart';
 import 'package:clack/views/video_group.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:transparent_image/transparent_image.dart';
@@ -68,7 +70,7 @@ class _DiscoverState extends State<Discover> {
                   icon: Icon(Icons.search),
                   onPressed: () => showNotImplemented(context))
             ],
-            title: Text("Discover"),
+            title: Text(LocaleKeys.page_discover).tr(),
           ),
           body: !_hashtags.hasLoaded
               ? Center(
@@ -125,9 +127,9 @@ class _DiscoverState extends State<Discover> {
                                 _handleOpenGroup(_hashtagVideos[index], ht),
                             child: Text(ht.title, style: hashtagTextStyle)),
                         Text(
-                          "Trending Hashtag",
+                          LocaleKeys.hashtag_trending,
                           style: subtextTextStyle,
-                        )
+                        ).tr()
                       ],
                     ),
                     Spacer(),
@@ -135,7 +137,9 @@ class _DiscoverState extends State<Discover> {
                         color: Colors.blueGrey,
                         child: Padding(
                             padding: EdgeInsets.all(5),
-                            child: Text(statToString(ht.stats.videoCount),
+                            child: Text(
+                                statToString(context)
+                                    .format(ht.stats.videoCount),
                                 style: TextStyle(color: Colors.white)))),
                   ])),
 
@@ -193,7 +197,7 @@ class _DiscoverState extends State<Discover> {
           arguments: VideoGroupArguments(
               stream: stream,
               headerBuilder: () => HashtagInfoFragment(initialHashtag: ht),
-              getShare: (shareExtra) => getHashtagShare(ht, shareExtra)));
+              getShare: () => getHashtagShare(ht)));
 
   Future<bool> _handleBack() {
     widget.setActive(VideoFeedActivePage.VIDEO);

@@ -1,0 +1,82 @@
+{
+	"comment_count": {
+		"zero": "Non ci sono commenti",
+		"one": "{} commento",
+		"many": "{} commenti",
+		"other": "{} commenti"
+	},
+	"comment_owner": "Autore",
+	"comment_show_replies": {
+		"other": "Visualizza altre risposte ({})"
+	},
+	"comment_show_more": {
+		"other": "Visualizza altro ({})"
+	},
+
+	"page_discover": "Scopri",
+	"page_notifications": "Notifiche",
+	"page_profile": "Profilo",
+	"page_settings": "Impostazioni",
+
+	"hashtag_trending": "Hashtag di tendenza",
+
+	"notifications_empty": "Qui vedrai i tuoi messaggi e le tue notifiche",
+
+	"user_empty_liked_videos": "Qui vedrai i tuoi video cha hai messo 'Mi Piace'",
+	"user_hidden_liked_videos": "I video a cui @{} ha messo 'Mi Piace' sono privati",
+	"user_following": "Seguiti",
+	"user_followers": "Follower",
+	"user_hearts": "Mi piace",
+	"user_unique_id": "@{}",
+
+	"settings_best_quality": "Qualità sempre alta",
+	"settings_best_quality_desc": "Potrebbe causare il buffering sulle reti lente.",
+	"settings_dark_mode": "Modalità notturna",
+	"settings_dark_mode_desc": "Proteggi i tuoi occhi!",
+	"settings_color_primary": "Colore principale",
+	"settings_color_primary_desc": "Il colore usato per i pulsanti, navbar, e texto speciale.",
+	"settings_color_bottom_bar": "Colore della barra inferiore",
+	"settings_color_bottom_bar_desc": "Il colore usato per la barra inferiore.",
+	"settings_color_icon": "Colore particolari",
+	"settings_color_icon_desc": "Il colore usato per le icone della barra inferiore.",
+	"settings_language": "Lengua",
+	"settings_reset": "Reimposta app",
+	"settings_reset_desc": "Reimposta tutte le preferenze del app. (Non perderai il tuo Accout)",
+	"settings_user_agent": "User Agent",
+	"settings_section_account": "Account",
+	"settings_section_advanced": "Avanzate",
+	"settings_section_theme": "Tema",
+	"settings_section_video": "Video",
+
+	"video_count": {
+		"zero": "Non ci sono video",
+		"one": "{} video",
+		"many": "{} video",
+		"other": "{} video"
+	},
+
+	"favorites_add": "Aggiungi ai Favoriti",
+	"empty_message": "Nessun contenuto...",
+	"input_hint": "Digita un messaggio...",
+	"label_color_selected": "Colore selezionato",
+	"label_follow": "Segui",
+	"label_original": "Originale",
+	"not_implemented": "NON IMPLEMENTATO",
+	"not_implemented_msg": "Questa funzionalità verrà aggiunta in seguito.",
+	"reset_warning": "Verranno reimpostate tutte le preferenze. Non perderai il tuo Account.",
+	"send_message": "Invia un messaggio",
+	"sign_in": "Accedi",
+	"sign_in_message": "Accedi al tuo account",
+	"sign_in_success": "Accesso eseguito con successo. Premere 'Fatto' per ricaricare l'app.",
+	"sign_out": "Esci",
+	"sign_out_warning": "Sei sicuro di voler uscire? L'app verrà riavviata dopo la disconnessione.",
+
+	"day_suffix": "{}g fa",
+	"hour_suffix": "{}o fa",
+	"minute_suffix": "{}m fa",
+	"second_suffix": "{}s fa",
+
+	"accept": "Fatto",
+	"cancel": "Annulla",
+	"success": "Bene!"
+}

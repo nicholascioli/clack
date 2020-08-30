@@ -1,0 +1,81 @@
+{
+	"comment_count": {
+		"zero": "",
+		"one": "",
+		"many": "",
+		"other": ""
+	},
+	"comment_owner": "",
+	"comment_show_replies": {
+		"other": ""
+	},
+	"comment_show_more": {
+		"other": ""
+	},
+
+	"page_discover": "",
+	"page_notifications": "",
+	"page_profile": "",
+	"page_settings": "",
+
+	"hashtag_trending": "",
+
+	"notifications_empty": "",
+
+	"user_empty_liked_videos": "",
+	"user_hidden_liked_videos": "",
+	"user_following": "",
+	"user_followers": "",
+	"user_hearts": "",
+	"user_unique_id": "",
+
+	"settings_best_quality": "",
+	"settings_best_quality_desc": "",
+	"settings_dark_mode": "",
+	"settings_dark_mode_desc": "",
+	"settings_color_primary": "",
+	"settings_color_primary_desc": "",
+	"settings_color_bottom_bar": "",
+	"settings_color_bottom_bar_desc": "",
+	"settings_color_icon": "",
+	"settings_color_icon_desc": "",
+	"settings_language": "",
+	"settings_reset": "",
+	"settings_reset_desc": "",
+	"settings_user_agent": "",
+	"settings_section_account": "",
+	"settings_section_advanced": "",
+	"settings_section_theme": "",
+	"settings_section_video": "",
+
+	"video_count": {
+		"zero": "",
+		"one": "",
+		"many": "",
+		"other": ""
+	},
+
+	"favorites_add": "",
+	"empty_message": "",
+	"input_hint": "",
+	"label_color_selected": "",
+	"label_follow": "",
+	"label_original": "",
+	"reset_warning": "",
+	"send_message": "",
+	"sign_in": "",
+	"sign_in_message": "",
+	"sign_in_success": "",
+	"sign_out": "",
+	"sign_out_warning": "",
+
+	"day_suffix": "",
+	"hour_suffix": "",
+	"minute_suffix": "",
+	"second_suffix": "",
+
+	"accept": "",
+	"apply": "",
+	"cancel": "",
+	"success": ""
+}

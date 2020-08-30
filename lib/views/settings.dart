@@ -1,8 +1,10 @@
 import 'package:clack/api.dart';
 import 'package:clack/fragments/StringSetFragment.dart';
+import 'package:clack/generated/locale_keys.g.dart';
 import 'package:clack/utility.dart';
 import 'package:clack/views/sign_in_webview.dart';
 import 'package:dynamic_theme/dynamic_theme.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
@@ -15,7 +17,6 @@ class SettingsView extends StatefulWidget {
 
   // Keys for the preferences
   static final String videoFullQualityKey = "VIDEO_FULL_QUALITY";
-  static final String sharingShowInfo = "SHARING_SHOW_INFO";
   static final String themePrimaryColor = "THEME_PRIMARY_COLOR";
   static final String themeBottomBarColor = "THEME_BOTTOM_BAR_COLOR";
   static final String themeIconColor = "THEME_ICON_COLOR";
@@ -39,31 +40,40 @@ class _SettingsViewState extends State<SettingsView> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text("Settings")),
+      appBar: AppBar(title: Text(LocaleKeys.page_settings).tr()),
       body: _prefs == null
           ? Container()
           : SettingsList(
               sections: [
-                SettingsSection(title: "Account", tiles: [
-                  API.isLoggedIn()
-                      ? SettingsTile(
-                          title: "Sign out",
-                          leading: Icon(Icons.exit_to_app),
-                          onTap: () => _showLogOutDialog())
-                      : SettingsTile(
-                          title: "Sign in",
-                          leading: Icon(Icons.person_outline),
-                          onTap: () => Navigator.pushNamed(
-                              context, SignInWebview.routeName),
-                        )
-                ]),
                 SettingsSection(
-                  title: "Video",
+                    title: LocaleKeys.settings_section_account.tr(),
+                    tiles: [
+                      API.isLoggedIn()
+                          ? SettingsTile(
+                              title: LocaleKeys.sign_out.tr(),
+                              leading: Icon(Icons.exit_to_app),
+                              onTap: () => _showLogOutDialog())
+                          : SettingsTile(
+                              title: LocaleKeys.sign_in.tr(),
+                              leading: Icon(Icons.person_outline),
+                              onTap: () => Navigator.pushNamed(
+                                  context, SignInWebview.routeName),
+                            ),
+
+                      // Language selection
+                      SettingsTile(
+                          title: LocaleKeys.settings_language.tr(),
+                          leading: Icon(Icons.translate),
+                          subtitle: context.locale.toLanguageTag(),
+                          onTap: () => _handleLanguageSelect())
+                    ]),
+                SettingsSection(
+                  title: LocaleKeys.settings_section_video.tr(),
                   tiles: [
                     SettingsTile.switchTile(
                       leading: Icon(Icons.hd),
-                      title: "Always use best quality",
-                      subtitle: "Warning: This will use more data",
+                      title: LocaleKeys.settings_best_quality.tr(),
+                      subtitle: LocaleKeys.settings_best_quality_desc.tr(),
                       onToggle: (value) => _prefs
                           .setBool(SettingsView.videoFullQualityKey, value)
                           .then((_) => setState(() {})),
@@ -73,27 +83,12 @@ class _SettingsViewState extends State<SettingsView> {
                   ],
                 ),
                 SettingsSection(
-                  title: "Sharing",
-                  tiles: [
-                    SettingsTile.switchTile(
-                        leading: Icon(Icons.share),
-                        title: "Share info",
-                        subtitle:
-                            "Share links with relevant info. Disable to only share the link itself.",
-                        onToggle: (value) => _prefs
-                            .setBool(SettingsView.sharingShowInfo, value)
-                            .then((_) => setState(() {})),
-                        switchValue:
-                            _prefs.getBool(SettingsView.sharingShowInfo))
-                  ],
-                ),
-                SettingsSection(
-                  title: "Theme",
+                  title: LocaleKeys.settings_section_theme.tr(),
                   tiles: [
                     SettingsTile.switchTile(
                         leading: Icon(Icons.brightness_3),
-                        title: "Enable dark mode",
-                        subtitle: "Save my retinas!",
+                        title: LocaleKeys.settings_dark_mode.tr(),
+                        subtitle: LocaleKeys.settings_dark_mode_desc.tr(),
                         onToggle: (value) => DynamicTheme.of(context)
                             .setBrightness(
                                 value ? Brightness.dark : Brightness.light),
@@ -101,8 +96,8 @@ class _SettingsViewState extends State<SettingsView> {
                             Theme.of(context).brightness == Brightness.dark),
                     SettingsTile(
                       leading: Icon(Icons.color_lens),
-                      title: "Primary Color",
-                      subtitle: "Color to use for buttons and themed text",
+                      title: LocaleKeys.settings_color_primary.tr(),
+                      subtitle: LocaleKeys.settings_color_primary_desc.tr(),
                       trailing: Container(
                           // FIXME: This is subpar. But how can we update?
                           key: UniqueKey(),
@@ -110,7 +105,7 @@ class _SettingsViewState extends State<SettingsView> {
                               getThemeColor(
                                   _prefs, SettingsView.themePrimaryColor)))),
                       onTap: () => _handleColorPicker(
-                          "Primary Color",
+                          LocaleKeys.settings_color_primary.tr(),
                           getThemeColor(_prefs, SettingsView.themePrimaryColor),
                           (color) => createTheme(
                               context: context, primaryColor: color),
@@ -118,8 +113,8 @@ class _SettingsViewState extends State<SettingsView> {
                     ),
                     SettingsTile(
                       leading: Icon(Icons.border_bottom),
-                      title: "Bottom Bar Color",
-                      subtitle: "Color to use for the bottom bar",
+                      title: LocaleKeys.settings_color_bottom_bar.tr(),
+                      subtitle: LocaleKeys.settings_color_bottom_bar_desc.tr(),
                       trailing: Container(
                           // FIXME: This is subpar. But how can we update?
                           key: UniqueKey(),
@@ -127,7 +122,7 @@ class _SettingsViewState extends State<SettingsView> {
                               getThemeColor(
                                   _prefs, SettingsView.themeBottomBarColor)))),
                       onTap: () => _handleColorPicker(
-                          "Bottom Bar Color",
+                          LocaleKeys.settings_color_bottom_bar.tr(),
                           getThemeColor(
                               _prefs, SettingsView.themeBottomBarColor),
                           (color) => createTheme(
@@ -136,8 +131,8 @@ class _SettingsViewState extends State<SettingsView> {
                     ),
                     SettingsTile(
                       leading: Icon(Icons.home),
-                      title: "Bottom Bar Icon Color",
-                      subtitle: "Color to use for the bottom bar's icons",
+                      title: LocaleKeys.settings_color_icon.tr(),
+                      subtitle: LocaleKeys.settings_color_icon_desc.tr(),
                       trailing: Container(
                           // FIXME: This is subpar. But how can we update?
                           key: UniqueKey(),
@@ -145,7 +140,7 @@ class _SettingsViewState extends State<SettingsView> {
                               getThemeColor(
                                   _prefs, SettingsView.themeIconColor)))),
                       onTap: () => _handleColorPicker(
-                          "Bottom Bar Icon Color",
+                          LocaleKeys.settings_color_icon.tr(),
                           getThemeColor(_prefs, SettingsView.themeIconColor),
                           (color) =>
                               createTheme(context: context, iconColor: color),
@@ -154,15 +149,15 @@ class _SettingsViewState extends State<SettingsView> {
                   ],
                 ),
                 SettingsSection(
-                  title: "Advanced",
+                  title: LocaleKeys.settings_section_advanced.tr(),
                   tiles: [
                     SettingsTile(
-                      title: "User Agent",
+                      title: LocaleKeys.settings_user_agent.tr(),
                       subtitle:
                           _prefs.getString(SettingsView.advancedUserAgentKey),
                       leading: Icon(Icons.public),
                       onTap: () => _showTextDialog(
-                              "User Agent",
+                              LocaleKeys.settings_user_agent.tr(),
                               _prefs.getString(
                                       SettingsView.advancedUserAgentKey) ??
                                   API.USER_AGENT)
@@ -176,9 +171,8 @@ class _SettingsViewState extends State<SettingsView> {
                       }),
                     ),
                     SettingsTile(
-                        title: "Reset to Default",
-                        subtitle:
-                            "Clear all user settings. (Note: Will NOT log you out)",
+                        title: LocaleKeys.settings_reset.tr(),
+                        subtitle: LocaleKeys.settings_reset_desc.tr(),
                         leading: Icon(Icons.refresh),
                         onTap: () => _showRefreshDialog())
                   ],
@@ -186,6 +180,49 @@ class _SettingsViewState extends State<SettingsView> {
               ],
             ),
     );
+  }
+
+  void _handleLanguageSelect() async {
+    Locale nextLocale = await showDialog<Locale>(
+        context: context,
+        builder: (context) {
+          Locale selected = context.locale;
+          return AlertDialog(
+              title: Text(LocaleKeys.settings_language).tr(),
+              actions: [
+                FlatButton(
+                  child: Text(LocaleKeys.cancel).tr(),
+                  onPressed: () => Navigator.of(context).pop(null),
+                ),
+                FlatButton(
+                  child: Text(LocaleKeys.accept).tr(),
+                  onPressed: () => Navigator.of(context).pop(selected),
+                )
+              ],
+              content: StatefulBuilder(
+                builder: (context, setState) => Container(
+                    width: double.minPositive,
+                    child: ListView.separated(
+                        shrinkWrap: true,
+                        itemBuilder: (context, index) => RadioListTile<Locale>(
+                            title: Text(context.supportedLocales[index]
+                                .toLanguageTag()),
+                            value: context.supportedLocales[index],
+                            groupValue: selected,
+                            onChanged: (v) => setState(() => selected = v)),
+                        separatorBuilder: (_, __) => Divider(),
+                        itemCount: context.supportedLocales.length)),
+              ));
+        });
+
+    // See if we are switching or not
+    if (nextLocale == null || nextLocale == context.locale) return;
+
+    print("SWITCHING LANG TO ${nextLocale.toLanguageTag()}");
+    context.locale = nextLocale;
+
+    // Restart the app
+    Phoenix.rebirth(context);
   }
 
   void _handleColorPicker(String title, Color old,
@@ -208,7 +245,9 @@ class _SettingsViewState extends State<SettingsView> {
                         Padding(
                             padding: EdgeInsets.symmetric(vertical: 20),
                             child: Row(children: [
-                              Expanded(child: Text("Selected Color: ")),
+                              Expanded(
+                                  child: Text(LocaleKeys.label_color_selected)
+                                      .tr()),
                               Container(
                                   key: UniqueKey(),
                                   child: ColorIndicator(
@@ -217,11 +256,11 @@ class _SettingsViewState extends State<SettingsView> {
                       ]))),
               actions: [
                 FlatButton(
-                  child: Text("Cancel"),
+                  child: Text(LocaleKeys.cancel).tr(),
                   onPressed: () => Navigator.of(context).pop(true),
                 ),
                 FlatButton(
-                  child: Text("Ok"),
+                  child: Text(LocaleKeys.accept).tr(),
                   onPressed: () => Navigator.of(context).pop(false),
                 )
               ],
@@ -243,16 +282,15 @@ class _SettingsViewState extends State<SettingsView> {
     showDialog(
         context: context,
         child: AlertDialog(
-          title: Text("Reset to Default?"),
-          content: Text(
-              "Are you sure you wish to clear the current settings? Note: This will not log you out of your account."),
+          title: Text(LocaleKeys.settings_reset).tr(),
+          content: Text(LocaleKeys.reset_warning).tr(),
           actions: [
             FlatButton(
-              child: Text("Cancel"),
+              child: Text(LocaleKeys.cancel).tr(),
               onPressed: () => Navigator.of(context).pop(),
             ),
             FlatButton(
-              child: Text("Reset to Default"),
+              child: Text(LocaleKeys.settings_reset).tr(),
               onPressed: () {
                 // Clear the old settings
                 _prefs.clear().then((value) => DynamicTheme.of(context)
@@ -280,16 +318,15 @@ class _SettingsViewState extends State<SettingsView> {
       context: context,
       barrierDismissible: false,
       builder: (context) => AlertDialog(
-        title: Text("Sign Out?"),
-        content: Text(
-            "Are you sure you want to sign out? After signing out, the app will reload."),
+        title: Text(LocaleKeys.sign_out).tr(),
+        content: Text(LocaleKeys.sign_out_warning).tr(),
         actions: [
           FlatButton(
-            child: Text("Cancel"),
+            child: Text(LocaleKeys.cancel).tr(),
             onPressed: () => Navigator.of(context).pop(),
           ),
           FlatButton(
-              child: Text("Sign Out"),
+              child: Text(LocaleKeys.sign_out).tr(),
               onPressed: () =>
                   API.logout().then((value) => Phoenix.rebirth(context)))
         ],

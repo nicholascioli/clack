@@ -1,10 +1,11 @@
 import 'package:clack/api.dart';
 import 'package:clack/api/hashtag_result.dart';
+import 'package:clack/generated/locale_keys.g.dart';
+import 'package:clack/utility.dart';
 import 'package:clack/views/full_image.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:transparent_image/transparent_image.dart';
-
-import '../utility.dart';
 
 class HashtagInfoFragment extends StatefulWidget {
   /// The initial data to show
@@ -91,11 +92,12 @@ class _HashtagInfoFragmentState extends State<HashtagInfoFragment> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text("#${ht.title}", style: titleTextStyle),
+                            Text(ht.title, style: titleTextStyle),
                             SizedBox(height: 20),
-                            Text(
-                                "${ht.stats != null ? statToString(ht.stats.videoCount) : "---"} videos",
-                                style: textStyle)
+                            Text(LocaleKeys.video_count, style: textStyle)
+                                .plural(
+                                    ht.stats != null ? ht.stats.videoCount : 0,
+                                    format: statToString(context))
                           ],
                         )),
                   )

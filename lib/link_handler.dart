@@ -16,39 +16,59 @@ import 'api/api_stream.dart';
 import 'api/hashtag_result.dart';
 import 'api/shared_types.dart';
 
-class LinkHandler {
-  final GlobalKey<NavigatorState> navigatorKey;
+class LinkHandler extends StatefulWidget {
+  static const String routeName = "/link";
 
+  /// The initial widget to display before loading the (possible) link
+  final Widget initialWidget;
+
+  const LinkHandler({@required this.initialWidget});
+
+  @override
+  _LinkHandlerState createState() => _LinkHandlerState();
+}
+
+class _LinkHandlerState extends State<LinkHandler> {
   StreamSubscription _sub;
 
-  LinkHandler({this.navigatorKey}) {
+  @override
+  void initState() {
+    super.initState();
+
     // Subscribe to links while running
-    _sub = getUriLinksStream().listen((Uri uri) {
+    _sub = getUriLinksStream().listen((Uri uri) async {
       print("LINK TIME: $uri");
-      _spawnLinkRoute(uri);
+      _spawnLinkPage(uri);
     }, onError: (e) => _showErrorAlert(e.toString()));
 
+    // Handle cold starts
     _coldInit();
   }
 
+  @override
+  void dispose() {
+    _sub.cancel();
+
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => widget.initialWidget;
+
+  // Handle cold-boot links
   void _coldInit() async {
-    // Handle cold-boot links
     try {
       String initialLink = await getInitialLink();
       if (initialLink != null) {
         final link = Uri.parse(initialLink);
-        _spawnLinkRoute(link);
+        _spawnLinkPage(link);
       }
     } on PlatformException {
       _showErrorAlert("Malformed link");
     }
   }
 
-  void dispose() {
-    _sub.cancel();
-  }
-
-  void _spawnLinkRoute(Uri link) async {
+  void _spawnLinkPage(Uri link) async {
     // If we have just the homepage, do nothing
     if (link.pathSegments.isEmpty) return;
 
@@ -105,7 +125,7 @@ class LinkHandler {
                 VideoGroupArguments(
                   stream: API.getVideosForMusic(m, 20),
                   headerBuilder: () => MusicPlayerFragment(musicInfo: m),
-                  getShare: (shareExtra) => getMusicShare(m, shareExtra),
+                  getShare: () => getMusicShare(m),
                 ));
             break;
           }
@@ -124,7 +144,7 @@ class LinkHandler {
                     stream: API.getVideosForHashtag(ht, 20),
                     headerBuilder: () => HashtagInfoFragment(
                         initialHashtag: ht, initialIsActual: true),
-                    getShare: (shareExtra) => getHashtagShare(ht, shareExtra)));
+                    getShare: () => getHashtagShare(ht)));
 
             break;
           }
@@ -135,17 +155,17 @@ class LinkHandler {
       }
     }
 
-    navigatorKey.currentState.pushNamed(args.item1, arguments: args.item2);
+    Navigator.of(context).pushNamed(args.item1, arguments: args.item2);
   }
 
   void _showErrorAlert(String msg) => showDialog(
-      context: navigatorKey.currentContext,
+      context: context,
       child: AlertDialog(
         content: Text("Could not open link! :( \n\nReason: $msg"),
         actions: [
           FlatButton(
             child: Text("OK"),
-            onPressed: () => navigatorKey.currentState.pop(),
+            onPressed: () => Navigator.of(context).pop(),
           )
         ],
       ));

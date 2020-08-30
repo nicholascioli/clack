@@ -1,4 +1,6 @@
 import 'package:clack/api.dart';
+import 'package:clack/generated/locale_keys.g.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:flutter_phoenix/flutter_phoenix.dart';
@@ -12,10 +14,11 @@ class SignInWebview extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text("Log in"),
+        title: Text(LocaleKeys.sign_in).tr(),
       ),
       body: InAppWebView(
-        initialUrl: "https://m.tiktok.com/login",
+        initialUrl:
+            "https://m.tiktok.com/login?lang=${context.locale.languageCode}",
         initialOptions: API.webViewOptions,
 
         // Here, we look for the cookie 'sid_guard'. Once found, we kill the
@@ -51,11 +54,12 @@ class SignInWebview extends StatelessWidget {
       context: ctx,
       barrierDismissible: false,
       builder: (context) => AlertDialog(
-        title: Text("Success!"),
-        content: Text("You are now logged in. Press OK to reload."),
+        title: Text(LocaleKeys.success).tr(),
+        content: Text(LocaleKeys.sign_in_success).tr(),
         actions: [
           FlatButton(
-              child: Text("OK"), onPressed: () => Phoenix.rebirth(context)),
+              child: Text(LocaleKeys.accept).tr(),
+              onPressed: () => Phoenix.rebirth(context)),
         ],
       ),
     );
