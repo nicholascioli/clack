@@ -1,6 +1,7 @@
 import 'package:clack/api/api_stream.dart';
 import 'package:clack/api/shared_types.dart';
 import 'package:clack/api/video_result.dart';
+import 'package:clack/fragments/UserHandleFragment.dart';
 import 'package:clack/generated/locale_keys.g.dart';
 import 'package:clack/utility.dart';
 import 'package:clack/views/user_info.dart';
@@ -176,25 +177,23 @@ class _CommentsFragmentState extends State<CommentsFragment> {
                           mainAxisSize: MainAxisSize.min,
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            GestureDetector(
+                            UserHandleFragment(
+                                user: comment.user,
+                                style: boldStyle,
                                 onTap: () => _handleViewUser(comment),
-                                child: RichText(
-                                  text: TextSpan(
-                                      text: comment.user.uniqueId,
-                                      style: boldStyle,
-                                      children: [
-                                        comment.user.uniqueId ==
-                                                widget.owner.author.uniqueId
-                                            ? TextSpan(text: " - ", children: [
-                                                TextSpan(
-                                                    text: LocaleKeys
-                                                        .comment_owner
-                                                        .tr(),
-                                                    style: creatorStyle)
-                                              ])
-                                            : TextSpan()
-                                      ]),
-                                )),
+                                extra: comment.user.uniqueId ==
+                                        widget.owner.author.uniqueId
+                                    ? TextSpan(text: " - ", children: [
+                                        TextSpan(
+                                            text: LocaleKeys.comment_owner.tr(),
+                                            style: creatorStyle)
+                                      ])
+                                    : null,
+                                // TODO: Seems as though the verified info
+                                //   isn't shown when its the original author.
+                                verifiedOverride: comment.user.uniqueId ==
+                                        widget.owner.author.uniqueId &&
+                                    widget.owner.author.verified),
                             SizedBox(height: 5),
                             RichText(
                                 text: TextSpan(

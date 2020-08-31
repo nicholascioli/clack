@@ -322,7 +322,11 @@ class Comment {
             nickname: user["nickname"],
             avatarThumb: Uri.parse(user["avatar_thumb"]["url_list"][0]),
             uniqueId: user["unique_id"],
-            secUid: user["sec_uid"]),
+            secUid: user["sec_uid"],
+
+            // TODO: Figure out if this is always the case
+            verified:
+                user["custom_verify"] != null && user["custom_verify"] != ""),
         replyId: json["reply_id"],
         userDigged: json["user_digged"] == 1,
         replyComment:
