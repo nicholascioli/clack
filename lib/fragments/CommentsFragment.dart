@@ -146,7 +146,9 @@ class _CommentsFragmentState extends State<CommentsFragment> {
   Widget _buildCommentSliver(int index, Comment comment, bool isReply,
       {bool isSliver = true}) {
     TextStyle dateStyle = TextStyle(color: Colors.grey);
-    TextStyle boldStyle = TextStyle(fontWeight: FontWeight.bold);
+    TextStyle boldStyle = TextStyle(
+        color: Theme.of(context).textTheme.bodyText1.color,
+        fontWeight: FontWeight.bold);
     TextStyle creatorStyle = TextStyle(color: Theme.of(context).accentColor);
 
     var builder = () => Padding(
