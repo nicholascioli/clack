@@ -1,6 +1,6 @@
 // DO NOT EDIT. This is code generated via package:easy_localization/generate.dart
 
-abstract class  LocaleKeys {
+abstract class LocaleKeys {
   static const comment_count = 'comment_count';
   static const comment_owner = 'comment_owner';
   static const comment_show_replies = 'comment_show_replies';
@@ -24,7 +24,8 @@ abstract class  LocaleKeys {
   static const settings_color_primary = 'settings_color_primary';
   static const settings_color_primary_desc = 'settings_color_primary_desc';
   static const settings_color_bottom_bar = 'settings_color_bottom_bar';
-  static const settings_color_bottom_bar_desc = 'settings_color_bottom_bar_desc';
+  static const settings_color_bottom_bar_desc =
+      'settings_color_bottom_bar_desc';
   static const settings_color_icon = 'settings_color_icon';
   static const settings_color_icon_desc = 'settings_color_icon_desc';
   static const settings_language = 'settings_language';
@@ -58,5 +59,4 @@ abstract class  LocaleKeys {
   static const accept = 'accept';
   static const cancel = 'cancel';
   static const success = 'success';
-
 }
