@@ -12,42 +12,56 @@ class NotificationView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (API.isLoggedIn()) API.getNotifications(20);
+
     return WillPopScope(
         onWillPop: () => _handleBack(),
         child: Scaffold(
-          appBar: AppBar(
-            leading: IconButton(
-              icon: Icon(Icons.arrow_back),
-              onPressed: () => _handleBack(),
-            ),
-            actions: [
-              IconButton(
-                  icon: Icon(Icons.send),
-                  onPressed: () => showNotImplemented(context))
-            ],
-            title: Text(LocaleKeys.page_notifications).tr(),
-          ),
-          body: Center(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(Icons.notifications_none, size: 80, color: Colors.grey),
-                SizedBox(height: 20),
-                Text(LocaleKeys.notifications_empty).tr(),
-
-                // Only show the log in button when not logged in
-                Visibility(
-                    visible: !API.isLoggedIn(),
-                    child: Padding(
-                        padding: EdgeInsets.only(top: 20),
-                        child: RaisedButton(
-                            child: Text(LocaleKeys.sign_in),
-                            onPressed: () => Navigator.of(context)
-                                .pushNamed(SignInWebview.routeName))))
+            appBar: AppBar(
+              leading: IconButton(
+                icon: Icon(Icons.arrow_back),
+                onPressed: () => _handleBack(),
+              ),
+              actions: [
+                IconButton(
+                    icon: Icon(Icons.send),
+                    onPressed: () => showNotImplemented(context))
               ],
+              title: Text(LocaleKeys.page_notifications).tr(),
             ),
-          ),
-        ));
+            body: LayoutBuilder(
+                builder: (context, constraints) => RefreshIndicator(
+                    onRefresh: () async => await API.getNotificationCount(),
+                    child: false
+                        ? ListView()
+                        : SingleChildScrollView(
+                            physics: AlwaysScrollableScrollPhysics(),
+                            child: SizedBox(
+                              height: constraints.maxHeight,
+                              child: Center(
+                                child: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(Icons.notifications_none,
+                                        size: 80, color: Colors.grey),
+                                    SizedBox(height: 20),
+                                    Text(LocaleKeys.notifications_empty).tr(),
+
+                                    // Only show the log in button when not logged in
+                                    Visibility(
+                                        visible: !API.isLoggedIn(),
+                                        child: Padding(
+                                            padding: EdgeInsets.only(top: 20),
+                                            child: RaisedButton(
+                                                child: Text(LocaleKeys.sign_in),
+                                                onPressed: () =>
+                                                    Navigator.of(context)
+                                                        .pushNamed(SignInWebview
+                                                            .routeName))))
+                                  ],
+                                ),
+                              ),
+                            ))))));
   }
 
   Future<bool> _handleBack() {

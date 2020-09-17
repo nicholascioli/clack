@@ -22,6 +22,7 @@ environment:
 
 dependencies:
   audioplayer: ^0.8.1
+  badges: ^1.1.1
   extended_tabs: ^0.2.3
   dataclass: ^0.3.0
   dynamic_theme: ^1.0.1
