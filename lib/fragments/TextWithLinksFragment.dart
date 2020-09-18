@@ -17,10 +17,12 @@ class TextWithLinksFragment extends StatelessWidget {
   final VideoResult videoResult;
   final TextStyle style;
   final BuildContext context;
-  final void Function() onTap;
 
-  const TextWithLinksFragment(
-      {this.videoResult, this.style, this.context, this.onTap});
+  const TextWithLinksFragment({
+    this.videoResult,
+    this.style,
+    this.context,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -54,9 +56,6 @@ class TextWithLinksFragment extends StatelessWidget {
               alignment: PlaceholderAlignment.middle,
               child: GestureDetector(
                   onTap: () async {
-                    // Call parent onTap first
-                    onTap();
-
                     if (isDuet) {
                       // final videoInfo = await API.getVideoInfo(info.awemeId);
                       Navigator.of(context).pushNamed(VideoFeed.routeName,

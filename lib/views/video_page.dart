@@ -1,12 +1,14 @@
-import 'package:clack/api.dart';
+import 'dart:io';
+
+import 'package:better_player/better_player.dart';
 import 'package:clack/api/api_stream.dart';
 import 'package:clack/api/shared_types.dart';
+import 'package:clack/api/video_result.dart';
 import 'package:clack/fragments/CommentsFragment.dart';
 import 'package:clack/fragments/MusicPlayerFragment.dart';
 import 'package:clack/fragments/TextWithLinksFragment.dart';
 import 'package:clack/fragments/UserHandleFragment.dart';
 import 'package:clack/utility.dart';
-import 'package:clack/api/video_result.dart';
 import 'package:clack/views/sign_in_webview.dart';
 import 'package:clack/views/video_group.dart';
 import 'package:flutter/material.dart';
@@ -14,15 +16,10 @@ import 'package:icon_shadow/icon_shadow.dart';
 import 'package:like_button/like_button.dart';
 import 'package:marquee/marquee.dart';
 import 'package:share/share.dart';
-import 'package:video_player/video_player.dart';
 import 'package:wakelock/wakelock.dart';
 
-/// VideoPage
-///
-/// A single video shown in the VideoFeed
-///
-/// Note: We need to keep track of the owning video, so we
-/// require the creator to pass in a [VideoResult].
+import '../api.dart';
+
 class VideoPage extends StatefulWidget {
   final VideoResult videoInfo;
   final int index, currentIndex;
@@ -50,34 +47,33 @@ class VideoPage extends StatefulWidget {
   _VideoPageState createState() => _VideoPageState();
 }
 
-class _VideoPageState extends State<VideoPage> with TickerProviderStateMixin {
-  VideoPlayerController _controller;
-  AnimationController _animation;
+class _VideoPageState extends State<VideoPage>
+    with SingleTickerProviderStateMixin {
+  BetterPlayerListVideoPlayerController _controller;
+  BetterPlayerDataSource _src;
+  BetterPlayerConfiguration _config;
 
-  bool _manuallyLiked;
-  bool _manuallyPaused = false;
+  // BetterPlayer has no way of checking if a list video is playing :(
+  bool _playing = true;
+
+  /// Animation controller for the spinning music disk
+  AnimationController _animation;
 
   /// Needed for triggering the heart animation programatically
   final GlobalKey<LikeButtonState> _globalKey = GlobalKey<LikeButtonState>();
 
-  /// Size of the icons in the column of buttons
-  final double _iconSize = 40.0;
-
   /// Size of the cover art of the [Music] animated button
   final double _musicRadius = 30.0;
 
-  /// Text Style of all of the normal text
-  final TextStyle _textStyle =
-      TextStyle(color: Colors.white, fontSize: 15, shadows: [
-    Shadow(
-      offset: Offset(2.0, 2.0),
-      blurRadius: 3.0,
-      color: Color.fromARGB(255, 0, 0, 0),
-    ),
-  ]);
+  /// Size of the icons in the column of buttons
+  final double _iconSize = 40.0;
+
+  /// Whether we have manually liked this video or not
+  /// Note: This is needed because VideoResult is final
+  bool _manuallyLiked;
 
   /// Text style of the username text
-  final TextStyle _usernameTextStyle = TextStyle(
+  TextStyle _usernameTextStyle = TextStyle(
       color: Colors.white,
       fontSize: 15,
       fontWeight: FontWeight.bold,
@@ -88,6 +84,16 @@ class _VideoPageState extends State<VideoPage> with TickerProviderStateMixin {
           color: Color.fromARGB(255, 0, 0, 0),
         ),
       ]);
+
+  /// Text Style of all of the normal text
+  final TextStyle _textStyle =
+      TextStyle(color: Colors.white, fontSize: 15, shadows: [
+    Shadow(
+      offset: Offset(2.0, 2.0),
+      blurRadius: 3.0,
+      color: Color.fromARGB(255, 0, 0, 0),
+    ),
+  ]);
 
   /// Text style of the date
   final TextStyle _dateTextStyle = TextStyle(
@@ -110,31 +116,65 @@ class _VideoPageState extends State<VideoPage> with TickerProviderStateMixin {
   /// A stream of comments for this video
   ApiStream<Comment> _comments;
 
-  void Function() _videoListener;
-
   @override
   void initState() {
     super.initState();
 
-    // Set up the [VideoController] to play (and loop) this video
-    _setupVideo(widget.videoInfo);
+    // Set up the video
+    _controller = BetterPlayerListVideoPlayerController();
 
-    // Make sure that we WakeLock if there is a video playing. We disable on dispose
-    _videoListener = () async {
-      // If we have opened to a link, pause the video
-      if (!_manuallyPaused && !ModalRoute.of(context).isCurrent) {
-        _manuallyPaused = true;
-        await _controller.pause();
-      }
+    _src = BetterPlayerDataSource(
+      BetterPlayerDataSourceType.NETWORK,
+      widget.forceHd
+          ? widget.videoInfo.video.downloadAddr.toString()
+          : widget.videoInfo.video.playAddr.toString(),
+      headers: {
+        HttpHeaders.userAgentHeader: API.USER_AGENT,
+        HttpHeaders.refererHeader: "https://www.tiktok.com/",
+      },
+    );
 
-      // Should we get wake lock?
-      Wakelock.isEnabled.then((haveLock) {
-        if (!haveLock && _controller.value.isPlaying)
-          Wakelock.enable();
-        else if (haveLock && !_controller.value.isPlaying) Wakelock.disable();
-      });
-    };
-    _controller.addListener(_videoListener);
+    _config = BetterPlayerConfiguration(
+      aspectRatio: widget.videoInfo.video.width / widget.videoInfo.video.height,
+      autoPlay: true,
+      controlsConfiguration: BetterPlayerControlsConfiguration(
+        enableFullscreen: false,
+        enableMute: false,
+        enablePlayPause: false,
+        enableProgressBar: false,
+        enableProgressText: false,
+        showControls: false,
+      ),
+      eventListener: (event) {
+        switch (event.betterPlayerEventType) {
+          case BetterPlayerEventType.PLAY:
+          case BetterPlayerEventType.PAUSE:
+            {
+              var isPlaying =
+                  event.betterPlayerEventType == BetterPlayerEventType.PLAY;
+
+              // Set / release the wakelock
+              Wakelock.isEnabled.then((haveLock) {
+                if (!haveLock && isPlaying)
+                  Wakelock.enable();
+                else if (haveLock && !isPlaying) Wakelock.disable();
+              });
+
+              // If we have changed pages, restart our position
+              if (widget.currentIndex != widget.index)
+
+                // Update the playing status
+                setState(() => _playing = isPlaying);
+              break;
+            }
+          default:
+            {}
+        }
+      },
+      looping: true,
+      placeholder: Image.network(widget.videoInfo.video.originCover.toString()),
+      showControlsOnInitialize: false,
+    );
 
     // Set up the animation controller to spin the music button indefinitely
     _animation =
@@ -152,15 +192,8 @@ class _VideoPageState extends State<VideoPage> with TickerProviderStateMixin {
 
   @override
   void dispose() {
-    // Pause any playing videos
-    _controller.removeListener(_videoListener);
-    _controller.pause();
-
     // Make sure to release the WakeLock, if we have it
     Wakelock.disable();
-
-    // Dispose of the controller, if it exist
-    _controller.dispose();
 
     // Dispose of the animation
     _animation.stop();
@@ -172,89 +205,65 @@ class _VideoPageState extends State<VideoPage> with TickerProviderStateMixin {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: _buildPage(),
-      // We do not want the video to shift when opening the keyboard
-      // e.g. when writing a comment
-      resizeToAvoidBottomInset: false,
-      backgroundColor: Colors.black,
-    );
-  }
-
-  /// Builds the entire page
-  Widget _buildPage() {
-    // Handle auto-playing when set as the active page
-    if (_controller.value.initialized) {
-      if (widget.index != widget.currentIndex) {
-        _controller
-            .pause()
-            .then((value) => _controller.seekTo(Duration(seconds: 0)));
-      } else if (!_manuallyPaused) {
-        _controller.play();
-      }
+    // TODO: Can this not be handled by the PageView?
+    if ((widget.index - widget.currentIndex).abs() > 2) {
+      this.dispose();
+      return Container();
     }
 
-    // Create the view
-    return Stack(children: [
-      // First child is the video or thumbnail, depending on whether or not
-      //   the video has loaded
-      // Note: This is wrapped in a [Hero] so that this [VideoPage] can animate
-      //   between itself and any page that shows an overview of videos.
-      Hero(
-          tag: "${widget.heroTag}_video_page_${widget.index}",
-          child: ClipRect(
-              child: OverflowBox(
-                  maxHeight: double.infinity,
-                  child: AspectRatio(
-                      aspectRatio: widget.videoInfo.video.width /
-                          widget.videoInfo.video.height,
-                      child: _controller.value.initialized
-                          ? VideoPlayer(_controller)
-                          : Image.network(widget.videoInfo.video.originCover
-                              .toString()))))),
+    return GestureDetector(
+      onTap: () => _playing ? _controller.pause() : _controller.play(),
+      child: Stack(
+        alignment: Alignment.center,
+        fit: StackFit.expand,
+        children: [
+          // The video / image preview
+          Hero(
+            tag: "${widget.heroTag}_video_page_${widget.index}",
+            child: FittedBox(
+              fit: BoxFit.fitWidth,
+              child: BetterPlayerListVideoPlayer(
+                _src,
+                configuration: _config,
+                betterPlayerListVideoPlayerController: _controller,
+              ),
+            ),
+          ),
 
-      // Full screen touch area for controling the video
-      GestureDetector(
-          onTap: () => setState(() {
-                if (_controller.value.isPlaying) {
-                  _controller.pause();
-                  _manuallyPaused = true;
-                } else {
-                  _controller.play();
-                  _manuallyPaused = false;
-                }
-              }),
-          onDoubleTap: () => _globalKey.currentState.onTap()),
-
-      // Then we show relevant text info
-      Align(
-          alignment: Alignment.bottomLeft,
-          child: Padding(
+          Align(
+            alignment: Alignment.bottomLeft,
+            child: Padding(
               padding: EdgeInsets.symmetric(horizontal: 5),
               child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  mainAxisSize: MainAxisSize.max,
-                  children: [
-                    Expanded(child: _buildTextInfo()),
-                    _buildButtons(),
-                  ]))),
+                crossAxisAlignment: CrossAxisAlignment.end,
+                mainAxisSize: MainAxisSize.max,
+                children: [
+                  Expanded(child: _buildTextInfo()),
+                  _buildButtons(),
+                ],
+              ),
+            ),
+          ),
 
-      // Then we (optionally) show the controls
-      IgnorePointer(
-          child: Align(
-        alignment: Alignment.center,
-        child: !_controller.value.isPlaying
-            ? IconShadowWidget(
-                Icon(
-                  Icons.play_arrow,
-                  size: 80,
-                  color: Colors.white,
+          // Controls when paused
+          IgnorePointer(
+            child: Visibility(
+              visible: !_playing,
+              child: Center(
+                child: IconShadowWidget(
+                  Icon(
+                    Icons.play_arrow,
+                    size: 64,
+                    color: Colors.white,
+                  ),
+                  shadowColor: Colors.black,
                 ),
-                shadowColor: Colors.black,
-              )
-            : Container(),
-      ))
-    ]);
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   /// Generates the text description and music info
@@ -276,18 +285,16 @@ class _VideoPageState extends State<VideoPage> with TickerProviderStateMixin {
                             getDelta(context, widget.videoInfo.createTime),
                             style: _dateTextStyle)))),
             Visibility(
-                visible: widget.videoInfo.desc.isNotEmpty,
-                child: Padding(
-                    padding: EdgeInsets.only(top: 20),
-                    child: TextWithLinksFragment(
-                        videoResult: widget.videoInfo,
-                        style: _textStyle,
-                        context: context,
-                        onTap: () {
-                          // Stop the video
-                          _manuallyPaused = true;
-                          _controller.pause();
-                        }))),
+              visible: widget.videoInfo.desc.isNotEmpty,
+              child: Padding(
+                padding: EdgeInsets.only(top: 20),
+                child: TextWithLinksFragment(
+                  videoResult: widget.videoInfo,
+                  style: _textStyle,
+                  context: context,
+                ),
+              ),
+            ),
             SizedBox(height: 20),
             Row(mainAxisSize: MainAxisSize.max, children: [
               IconShadowWidget(
@@ -420,10 +427,6 @@ class _VideoPageState extends State<VideoPage> with TickerProviderStateMixin {
             ),
             GestureDetector(
                 onTap: () {
-                  // Stop the video
-                  _manuallyPaused = true;
-                  _controller.pause();
-
                   // Open the page
                   Navigator.pushNamed(context, VideoGroup.routeName,
                       arguments: VideoGroupArguments(
@@ -450,27 +453,6 @@ class _VideoPageState extends State<VideoPage> with TickerProviderStateMixin {
                 )),
             SizedBox(height: 20)
           ]);
-
-  /// Sets up the [VideoController] to autoplay and loop the [vid]
-  void _setupVideo(VideoResult vid) async {
-    // If we have somehow run this with the same video, then do nothing
-    if (_controller != null &&
-        _controller.dataSource == vid.video.downloadAddr.toString()) return;
-
-    // Make a new one using the VideoResult
-    var oldController = _controller;
-    _controller = VideoPlayerController.network(widget.forceHd
-        ? widget.videoInfo.video.downloadAddr.toString()
-        : widget.videoInfo.video.playAddr.toString());
-    oldController?.pause()?.then((value) => oldController.dispose());
-
-    // Initialize the video so that it may start playing
-    _controller.initialize().then((value) => setState(() {}));
-
-    // Configure the video to loop indefinitely and start playback
-    _controller.setLooping(true);
-    _controller.play();
-  }
 
   void _showComments() {
     if (!API.isLoggedIn()) {
