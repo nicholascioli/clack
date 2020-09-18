@@ -12,6 +12,7 @@ import 'package:extended_tabs/extended_tabs.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:wakelock/wakelock.dart';
 
 /// Which page to show in the left page of the [VideoFeed]
 enum VideoFeedActivePage { VIDEO, SEARCH, NOTIFICATION, PROFILE }
@@ -117,6 +118,16 @@ class _VideoFeedState extends State<VideoFeed> {
         .then((value) => setState(() => _prefs = value));
 
     super.initState();
+  }
+
+  @override
+  void dispose() {
+    // Make sure to release the WakeLock, if we have it
+    // Note: This has to happen here since [VideoPage]s are
+    //   constantly being disposed.
+    Wakelock.disable();
+
+    super.dispose();
   }
 
   @override

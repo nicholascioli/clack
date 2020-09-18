@@ -161,10 +161,16 @@ class _VideoPageState extends State<VideoPage>
               });
 
               // If we have changed pages, restart our position
-              if (widget.currentIndex != widget.index)
+              if (widget.currentIndex != widget.index) {
+                // TODO: Wait for BetterPlayer to support exposing the
+                // BetterPlayerController so that we can seek
 
-                // Update the playing status
-                setState(() => _playing = isPlaying);
+                // Also, pause the video if it isn't the active page
+                if (isPlaying) _controller.pause();
+              }
+
+              // Update the playing status
+              setState(() => _playing = isPlaying);
               break;
             }
           default:
@@ -192,9 +198,6 @@ class _VideoPageState extends State<VideoPage>
 
   @override
   void dispose() {
-    // Make sure to release the WakeLock, if we have it
-    Wakelock.disable();
-
     // Dispose of the animation
     _animation.stop();
     _animation.dispose();
@@ -206,63 +209,66 @@ class _VideoPageState extends State<VideoPage>
   @override
   Widget build(BuildContext context) {
     // TODO: Can this not be handled by the PageView?
-    if ((widget.index - widget.currentIndex).abs() > 2) {
+    if ((widget.index - widget.currentIndex).abs() > 1) {
       this.dispose();
       return Container();
     }
 
-    return GestureDetector(
-      onTap: () => _playing ? _controller.pause() : _controller.play(),
-      child: Stack(
-        alignment: Alignment.center,
-        fit: StackFit.expand,
-        children: [
-          // The video / image preview
-          Hero(
-            tag: "${widget.heroTag}_video_page_${widget.index}",
-            child: FittedBox(
-              fit: BoxFit.fitWidth,
-              child: BetterPlayerListVideoPlayer(
-                _src,
-                configuration: _config,
-                betterPlayerListVideoPlayerController: _controller,
-              ),
+    return Stack(
+      alignment: Alignment.center,
+      fit: StackFit.expand,
+      children: [
+        // The video / image preview
+        Hero(
+          tag: "${widget.heroTag}_video_page_${widget.index}",
+          child: FittedBox(
+            fit: BoxFit.fitWidth,
+            child: BetterPlayerListVideoPlayer(
+              _src,
+              configuration: _config,
+              betterPlayerListVideoPlayerController: _controller,
             ),
           ),
+        ),
 
-          Align(
-            alignment: Alignment.bottomLeft,
-            child: Padding(
-              padding: EdgeInsets.symmetric(horizontal: 5),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                mainAxisSize: MainAxisSize.max,
-                children: [
-                  Expanded(child: _buildTextInfo()),
-                  _buildButtons(),
-                ],
-              ),
+        // Fullscreen controls
+        GestureDetector(
+          onTap: () => _playing ? _controller.pause() : _controller.play(),
+          onDoubleTap: () => _globalKey.currentState.onTap(),
+        ),
+
+        Align(
+          alignment: Alignment.bottomLeft,
+          child: Padding(
+            padding: EdgeInsets.symmetric(horizontal: 5),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              mainAxisSize: MainAxisSize.max,
+              children: [
+                Expanded(child: _buildTextInfo()),
+                _buildButtons(),
+              ],
             ),
           ),
+        ),
 
-          // Controls when paused
-          IgnorePointer(
-            child: Visibility(
-              visible: !_playing,
-              child: Center(
-                child: IconShadowWidget(
-                  Icon(
-                    Icons.play_arrow,
-                    size: 64,
-                    color: Colors.white,
-                  ),
-                  shadowColor: Colors.black,
+        // Controls when paused
+        IgnorePointer(
+          child: Visibility(
+            visible: !_playing,
+            child: Center(
+              child: IconShadowWidget(
+                Icon(
+                  Icons.play_arrow,
+                  size: 64,
+                  color: Colors.white,
                 ),
+                shadowColor: Colors.black,
               ),
             ),
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 
