@@ -10,6 +10,10 @@ the original TikTok app. Any and all activity that you do on TikTok's
 servers (such as watching/liking videos, commenting, and/or messaging other
 users) are still subject to data harvesting and privacy violations.**
 
+## Notice
+
+TikTok added some more verification, so make sure to use version `0.8.0+1` or newer.
+
 ## Getting Started
 
 This project is a starting point for a Flutter application.
