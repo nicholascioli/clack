@@ -41,7 +41,7 @@ class NotificationView extends StatelessWidget {
                     child: Padding(
                         padding: EdgeInsets.only(top: 20),
                         child: RaisedButton(
-                            child: Text(LocaleKeys.sign_in),
+                            child: Text(LocaleKeys.sign_in).tr(),
                             onPressed: () => Navigator.of(context)
                                 .pushNamed(SignInWebview.routeName))))
               ],
