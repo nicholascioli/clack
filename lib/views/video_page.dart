@@ -26,6 +26,7 @@ class VideoPage extends StatefulWidget {
   final bool showUserPage;
   final String heroTag;
   final bool forceHd;
+  final bool hasBottomBar;
 
   /// Construct a [VideoPage]
   ///
@@ -38,6 +39,7 @@ class VideoPage extends StatefulWidget {
       @required this.videoInfo,
       @required this.index,
       @required this.currentIndex,
+      @required this.hasBottomBar,
       this.showUserPage = true,
       this.heroTag,
       this.forceHd = false})
@@ -237,10 +239,13 @@ class _VideoPageState extends State<VideoPage>
           onDoubleTap: () => _globalKey.currentState.onTap(),
         ),
 
+        // Info and buttons
+        // Note: Padded here to make room for transparent bottom nav bar
         Align(
           alignment: Alignment.bottomLeft,
           child: Padding(
-            padding: EdgeInsets.symmetric(horizontal: 5),
+            padding: EdgeInsets.only(
+                left: 5, right: 5, bottom: widget.hasBottomBar ? 36 : 0),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.end,
               mainAxisSize: MainAxisSize.max,

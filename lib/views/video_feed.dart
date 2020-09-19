@@ -192,6 +192,7 @@ class _VideoFeedState extends State<VideoFeed> {
             ? AppBar(backgroundColor: Colors.transparent, elevation: 0)
             : null,
         extendBodyBehindAppBar: true,
+        extendBody: _onVideoPage && !_isNested,
         backgroundColor: Colors.black,
         bottomNavigationBar: !_isNested ? _buildBottomBar() : null,
         resizeToAvoidBottomInset: _activePage != VideoFeedActivePage.VIDEO,
@@ -215,6 +216,7 @@ class _VideoFeedState extends State<VideoFeed> {
                 showUserPage: _showUserInfo,
                 videoInfo: _videos[i],
                 index: i,
+                hasBottomBar: !_isNested,
                 currentIndex: _currentIndex,
                 heroTag: _heroTag,
                 forceHd: _prefs.getBool(SettingsView.videoFullQualityKey));
@@ -268,6 +270,8 @@ class _VideoFeedState extends State<VideoFeed> {
         ]));
 
     return BottomAppBar(
+        // Note: null here means to use the active theme
+        color: _onVideoPage ? Colors.transparent : null,
         elevation: 0,
         child: ButtonBar(
           alignment: MainAxisAlignment.spaceEvenly,

@@ -305,8 +305,8 @@ class _SettingsViewState extends State<SettingsView> {
                         brightness: SchedulerBinding
                             .instance.window.platformBrightness)));
 
-                // Exit the navigator
-                Navigator.of(context).pop();
+                // Reset the app
+                Phoenix.rebirth(context);
               },
             )
           ],
