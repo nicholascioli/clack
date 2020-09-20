@@ -21,6 +21,8 @@
 	"hashtag_trending": "Trending Hashtag",
 
 	"notifications_empty": "Messages and notifications will appear here",
+	"notification_announcement_title": "Announcement",
+	"notification_follow_title": "@{} has followed you!",
 
 	"user_empty_liked_videos": "Liked videos will show up here",
 	"user_hidden_liked_videos": "@{} has hidden their liked videos",
@@ -60,6 +62,7 @@
 	"input_hint": "Say something...",
 	"label_color_selected": "Selected Color",
 	"label_follow": "Follow",
+	"label_followed": "Following",
 	"label_original": "Original",
 	"not_implemented": "NOT IMPLEMENTED",
 	"not_implemented_msg": "This feature will (maybe) be added at a later date.",

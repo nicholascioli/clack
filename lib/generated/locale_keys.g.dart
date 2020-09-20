@@ -11,6 +11,9 @@ abstract class LocaleKeys {
   static const page_settings = 'page_settings';
   static const hashtag_trending = 'hashtag_trending';
   static const notifications_empty = 'notifications_empty';
+  static const notification_announcement_title =
+      'notification_announcement_title';
+  static const notification_follow_title = 'notification_follow_title';
   static const user_empty_liked_videos = 'user_empty_liked_videos';
   static const user_hidden_liked_videos = 'user_hidden_liked_videos';
   static const user_following = 'user_following';
@@ -42,6 +45,7 @@ abstract class LocaleKeys {
   static const input_hint = 'input_hint';
   static const label_color_selected = 'label_color_selected';
   static const label_follow = 'label_follow';
+  static const label_followed = 'label_followed';
   static const label_original = 'label_original';
   static const not_implemented = 'not_implemented';
   static const not_implemented_msg = 'not_implemented_msg';

@@ -4,6 +4,7 @@ import 'dart:io';
 
 import 'package:clack/api/author_result.dart';
 import 'package:clack/api/hashtag_result.dart';
+import 'package:clack/api/notification_result.dart';
 import 'package:clack/api/video_result.dart';
 import 'package:clack/utility.dart';
 import 'package:flutter/services.dart' show rootBundle;
@@ -41,6 +42,12 @@ class API {
   static String _lang;
   static AuthorResult _userInfo = _userDefaults; // Initialize as anonymous user
 
+  static ApiStream<NotificationResult> _notifications = ApiStream.empty();
+  static int _notificationCount = 0;
+
+  static ApiStream<NotificationResult> get notifications => _notifications;
+  static int get notificationCount => _notificationCount;
+
   // We need a [HeadlessInAppWebView] in order to perform url signing because
   //   the signing process is done using obfuscated JS
   static final HeadlessInAppWebView _webView = HeadlessInAppWebView(
@@ -61,6 +68,10 @@ class API {
       _loginToken = Cookie(name: "sid_guard", value: token);
       _webId = webId;
       _userInfo = await API.getAuthorInfo(Author(uniqueId: username));
+
+      // Keep a reference to the notifications we have
+      _notifications = getNotificationStream(20);
+      _notificationCount = await API.getNotificationCount();
     }
 
     return Future.value();
@@ -146,6 +157,68 @@ class API {
     return Future.value(asJson.containsKey("follow_status") && shouldFollow);
   }
 
+  /// Fetch the amount of unread notifications the logged in user has.
+  static Future<int> getNotificationCount() async {
+    // If we are not logged in, exit with 0
+    if (!API.isLoggedIn()) return 0;
+
+    String url = _getFormattedUrl(
+      "aweme/v1/notice/count",
+      {
+        "source": 4, // TODO: Figure out what this means
+      },
+      useMusically: true,
+    );
+
+    Map<String, dynamic> res = await _fetchResults(url, signUrl: false);
+
+    List<dynamic> counts = res["notice_count"];
+    print("NOTI COUNT: $counts");
+    return _notificationCount = counts.fold(
+        0, (previousValue, element) => previousValue + element["count"]);
+  }
+
+  /// Fetch the actual notifications
+  /// TODO: This won't work since cursor is based on timing interval
+  static ApiStream<NotificationResult> getNotificationStream(int count) {
+    // Return an empty stream if not logged in
+    if (!API.isLoggedIn())
+      return ApiStream(
+          count, (count, cursor) => Future.value(ApiResult(false, 0, [])));
+
+    return ApiStream(count, (count, cursor) {
+      String url = _getFormattedUrl(
+        "aweme/v1/notice/list/message",
+        {
+          "aid": 1233,
+          "max_time": cursor,
+          "min_time": 0,
+          "count": count,
+          "notice_group": 36, // TODO: What is this number?
+          "is_mark_read": 1, // Mark the messages as read after fetching
+          "notice_style": 4 // TODO: What is this field?
+        },
+        useMusically: true,
+      );
+
+      // print("NOTIFICATION URL! $url");
+      // print("COOKIE: ${_loginToken}");
+      // Map<String, dynamic> results = await _fetchResults(url, signUrl: false);
+      // print("GOT RES: $results");
+      return _fetchResultsFormatted(
+        url,
+        cursor,
+        bodyParser: (body) => body["messages"]["notice"]["notice_list"],
+        infoParser: (json) => Tuple2(
+          json["messages"]["notice"]["has_more"] == 1,
+          json["messages"]["notice"]["max_time"],
+        ),
+        resultMapper: (element) => NotificationResult.fromJson(element),
+      );
+    });
+  }
+
+  /// Returns the extended info on a single video from its [videoId].
   static Future<VideoResult> getVideoInfo(String videoId) async {
     String url = _getFormattedUrl("api/item/detail", {"itemId": videoId});
 
@@ -405,16 +478,21 @@ class API {
   /// Fetches data from a TT endpoint
   ///
   /// Set [shouldPost] to `false` for a GET, and `true` for a POST
+  /// Set [signUrl] to `false` to disable URL signing (useful for api.musical.ly
+  /// requests)
   static Future<dynamic> _fetchResults(String url,
-      {bool shouldPost = false}) async {
+      {bool shouldPost = false, bool signUrl = true}) async {
     // Sign the url using TT JS
     // Note: We construct a headless webview first and then dispose of
     //   it after we finish generating the code
-    await _webView.run();
-    String code = await sign(url);
-    String signedUrl = "$url&_signature=$code";
-    await _webView.dispose();
-    print("GOT URL: $signedUrl");
+    String signedUrl = url;
+    if (signUrl) {
+      await _webView.run();
+      String code = await sign(url);
+      signedUrl = "$url&_signature=$code";
+      await _webView.dispose();
+      print("GOT URL: $signedUrl");
+    }
 
     // Select the method
     var method = shouldPost ? http.post : http.get;
@@ -450,10 +528,14 @@ class API {
   /// Get a url with formatted [options]
   ///
   /// The endpoint is always assumed to start with https://m.tiktok.com/
-  /// Set [useMobile] to `false` for https://www.tiktok.com/
+  /// Set [useMobile] to `false` for https://www.tiktok.com/ or set
+  /// [setMusically] to `true` to use https://api.musical.ly/
   static String _getFormattedUrl(String endpoint, Map<String, dynamic> options,
-      {bool useMobile = true}) {
-    String result = "https://${useMobile ? "m" : "www"}.tiktok.com/$endpoint/";
+      {bool useMobile = true, useMusically = false}) {
+    String host = useMusically
+        ? "api2.musical.ly"
+        : "${useMobile ? "m" : "www"}.tiktok.com";
+    String result = "https://$host/$endpoint/";
 
     // Apply all of the options
     result += options.entries.fold(

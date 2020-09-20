@@ -1,3 +1,4 @@
+import 'package:badges/badges.dart';
 import 'package:clack/api.dart';
 import 'package:clack/api/api_stream.dart';
 import 'package:clack/utility.dart';
@@ -234,13 +235,17 @@ class _VideoFeedState extends State<VideoFeed> {
   Widget _buildBottomBar() {
     /// Builds a specific [icon] tab which sets the [active] page when clicked
     final buildTab = (IconData icon, VideoFeedActivePage active,
-            {void Function() afterClick}) =>
+            {void Function() afterClick, int badgeCount = 0}) =>
         IntrinsicWidth(
             child: Column(mainAxisSize: MainAxisSize.min, children: [
           IconButton(
               iconSize: 30,
               padding: EdgeInsets.all(2),
-              icon: Icon(icon, color: Theme.of(context).accentIconTheme.color),
+              icon: Badge(
+                showBadge: badgeCount != 0,
+                child:
+                    Icon(icon, color: Theme.of(context).accentIconTheme.color),
+              ),
               onPressed: () {
                 // Allow for switching between the states
                 print("PUSHED! Setting from $_activePage to $active");
@@ -285,8 +290,8 @@ class _VideoFeedState extends State<VideoFeed> {
                 padding: EdgeInsets.all(2),
                 icon: Icon(Icons.block, color: Colors.red),
                 onPressed: () => showNotImplemented(context)),
-            buildTab(
-                Icons.notifications_none, VideoFeedActivePage.NOTIFICATION),
+            buildTab(Icons.notifications_none, VideoFeedActivePage.NOTIFICATION,
+                badgeCount: API.notificationCount),
             buildTab(Icons.person_outline, VideoFeedActivePage.PROFILE)
           ],
         ));

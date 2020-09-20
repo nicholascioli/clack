@@ -102,7 +102,7 @@ class _UserInfoState extends State<UserInfo>
       if (!mounted) return;
 
       setState(() {
-        _isFollowing = (value.user.relation == 1);
+        _isFollowing = (value.user.relation != 0);
         _nickname = value.user.nickname;
       });
     });
@@ -127,260 +127,254 @@ class _UserInfoState extends State<UserInfo>
         fontWeight: FontWeight.bold);
 
     return WillPopScope(
-        onWillPop: () => widget.args.onBack(context),
-        child: Scaffold(
-            appBar: AppBar(
-              title: Text(_sparseAuthor.nickname ?? _nickname),
-              centerTitle: true,
-              leading: IconButton(
-                icon: Icon(Icons.arrow_back),
-                onPressed: () => widget.args.onBack(context),
-              ),
-              actions: _actions,
-            ),
-            body: DefaultTabController(
-                length: 2,
-                // Here we wrap in a NestedScrollView so that the nested Grid
-                //   view containing the videos can be scrolled together with the
-                //   general user info.
-                child: FutureBuilder(
-                  future: _authorResult,
-                  builder: (context, snapshot) {
-                    if (snapshot.connectionState == ConnectionState.done &&
-                        snapshot.hasData) {
-                      AuthorResult result = snapshot.data;
+      onWillPop: () => widget.args.onBack(context),
+      child: Scaffold(
+        appBar: AppBar(
+          title: Text(_sparseAuthor.nickname ?? _nickname),
+          centerTitle: true,
+          leading: IconButton(
+            icon: Icon(Icons.arrow_back),
+            onPressed: () => widget.args.onBack(context),
+          ),
+          actions: _actions,
+        ),
+        body: DefaultTabController(
+          length: 2,
+          // Here we wrap in a NestedScrollView so that the nested Grid
+          //   view containing the videos can be scrolled together with the
+          //   general user info.
+          child: FutureBuilder(
+            future: _authorResult,
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.done &&
+                  snapshot.hasData) {
+                AuthorResult result = snapshot.data;
 
-                      if (!_hasInit) {
-                        // Fetch the author's video stream
-                        _authorVideos =
-                            API.getAuthorVideoStream(result.user, 40);
-                        _authorFavoritedVideos =
-                            API.getAuthorFavoritedVideoStream(result.user, 40);
+                if (!_hasInit) {
+                  // Fetch the author's video stream
+                  _authorVideos = API.getAuthorVideoStream(result.user, 40);
+                  _authorFavoritedVideos =
+                      API.getAuthorFavoritedVideoStream(result.user, 40);
 
-                        _authorVideos.setOnChanged(() => setState(() {}));
-                        _authorFavoritedVideos
-                            .setOnChanged(() => setState(() {}));
+                  _authorVideos.setOnChanged(() => setState(() {}));
+                  _authorFavoritedVideos.setOnChanged(() => setState(() {}));
 
-                        // Start loading the videos
-                        _authorVideos.fetch();
-                        _authorFavoritedVideos.fetch();
+                  // Start loading the videos
+                  _authorVideos.fetch();
+                  _authorFavoritedVideos.fetch();
 
-                        // Don't allow this to set the streams again
-                        _hasInit = true;
-                      }
+                  // Don't allow this to set the streams again
+                  _hasInit = true;
+                }
 
-                      return NestedScrollView(
-                          headerSliverBuilder: (context, innerBoxIsScrolled) =>
-                              [
-                                SliverList(
-                                    delegate: SliverChildListDelegate.fixed([
-                                  SizedBox(height: 20),
-                                  // Profile Picture
-                                  Row(children: [
-                                    Spacer(),
-                                    Expanded(
-                                        child: FullImage.launcher(
-                                            context: context,
-                                            url: result.user.avatarLarger
-                                                .toString(),
-                                            child: AspectRatio(
-                                                aspectRatio: 1,
-                                                child: CircleAvatar(
-                                                  backgroundImage: NetworkImage(
-                                                      result.user.avatarMedium
-                                                          .toString()),
-                                                )))),
-                                    Spacer()
-                                  ]),
-
-                                  // The username
-                                  SizedBox(height: 10),
-                                  Column(children: [
-                                    UserHandleFragment(
-                                        user: result.user, style: userTextStyle)
-                                  ]),
-
-                                  // Social interaction buttons
-                                  SizedBox(height: 15),
-                                  Row(
-                                    mainAxisAlignment:
-                                        MainAxisAlignment.spaceEvenly,
-                                    children: [
-                                      _buildStatsColumn(
-                                          result,
-                                          result.stats.followingCount,
-                                          LocaleKeys.user_following),
-                                      _buildStatsColumn(
-                                          result,
-                                          result.stats.followerCount,
-                                          LocaleKeys.user_followers),
-                                      _buildStatsColumn(
-                                          result,
-                                          result.stats.heart,
-                                          LocaleKeys.user_hearts)
-                                    ],
+                return NestedScrollView(
+                  headerSliverBuilder: (context, innerBoxIsScrolled) => [
+                    SliverList(
+                      delegate: SliverChildListDelegate.fixed(
+                        [
+                          SizedBox(height: 20),
+                          // Profile Picture
+                          Row(children: [
+                            Spacer(),
+                            Expanded(
+                              child: FullImage.launcher(
+                                context: context,
+                                url: result.user.avatarLarger.toString(),
+                                child: AspectRatio(
+                                  aspectRatio: 1,
+                                  child: CircleAvatar(
+                                    backgroundImage: NetworkImage(
+                                        result.user.avatarMedium.toString()),
                                   ),
+                                ),
+                              ),
+                            ),
+                            Spacer()
+                          ]),
 
-                                  // Social buttons
-                                  !widget.args.isCurrentUser && API.isLoggedIn()
-                                      ? Padding(
-                                          padding: EdgeInsets.only(top: 10),
-                                          child: Visibility(
-                                              child: ButtonBar(
-                                                  alignment:
-                                                      MainAxisAlignment.center,
-                                                  children: [
-                                                    RaisedButton(
-                                                        onPressed: () =>
-                                                            showNotImplemented(
-                                                                context),
-                                                        child: Text(LocaleKeys
-                                                                .send_message)
-                                                            .tr()),
-                                                    OutlineButton(
-                                                      onPressed: () =>
-                                                          showNotImplemented(
-                                                              context),
-                                                      child: Icon(Icons
-                                                          .playlist_add_check),
-                                                    )
-                                                  ]),
-                                              replacement: ButtonBar(
-                                                alignment:
-                                                    MainAxisAlignment.center,
-                                                children: [
-                                                  RaisedButton(
-                                                      onPressed: () => API
-                                                          .followAuther(
-                                                              result.user,
-                                                              !_isFollowing)
-                                                          .then((value) =>
-                                                              setState(() =>
-                                                                  _isFollowing =
-                                                                      value)),
-                                                      child: Text(LocaleKeys
-                                                              .label_follow)
-                                                          .tr()),
-                                                ],
-                                              ),
-                                              visible: _isFollowing))
-                                      : Container(),
+                          // The username
+                          SizedBox(height: 10),
+                          Column(
+                            children: [
+                              UserHandleFragment(
+                                user: result.user,
+                                style: userTextStyle,
+                              )
+                            ],
+                          ),
 
-                                  // The author's optional signature
-                                  result.user.signature.isNotEmpty
-                                      ? Padding(
-                                          padding: EdgeInsetsDirectional.only(
-                                              start: 30, end: 30, top: 15),
-                                          child: Text(
-                                            result.user.signature,
-                                            style: softTextStyle,
-                                            textAlign: TextAlign.center,
-                                          ))
-                                      : Container(),
+                          // Social interaction buttons
+                          SizedBox(height: 15),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                            children: [
+                              _buildStatsColumn(
+                                  result,
+                                  result.stats.followingCount,
+                                  LocaleKeys.user_following),
+                              _buildStatsColumn(
+                                  result,
+                                  result.stats.followerCount,
+                                  LocaleKeys.user_followers),
+                              _buildStatsColumn(result, result.stats.heart,
+                                  LocaleKeys.user_hearts)
+                            ],
+                          ),
 
-                                  // The optional link to bio
-                                  ButtonBar(
-                                      alignment: MainAxisAlignment.center,
-                                      children: [
-                                        result.user.bioLink != null
-                                            ? Padding(
-                                                padding: EdgeInsets.symmetric(
-                                                    horizontal: 50),
-                                                child: FlatButton.icon(
-                                                    icon: Icon(Icons.link),
-                                                    label: Flexible(
-                                                        child: Text(
-                                                            result.user.bioLink
-                                                                .toString(),
-                                                            softWrap: false,
-                                                            overflow:
-                                                                TextOverflow
-                                                                    .ellipsis)),
-                                                    onPressed: () => launch(
-                                                        result.user.bioLink
-                                                            .toString())))
-                                            : Container()
-                                      ]),
-                                ])),
+                          // Social buttons
+                          !widget.args.isCurrentUser && API.isLoggedIn()
+                              ? Padding(
+                                  padding: EdgeInsets.only(top: 10),
+                                  child: Visibility(
+                                      child: ButtonBar(
+                                          alignment: MainAxisAlignment.center,
+                                          children: [
+                                            RaisedButton(
+                                                onPressed: () =>
+                                                    showNotImplemented(context),
+                                                child: Text(
+                                                        LocaleKeys.send_message)
+                                                    .tr()),
+                                            OutlineButton(
+                                              onPressed: () =>
+                                                  showNotImplemented(context),
+                                              child: Icon(
+                                                  Icons.playlist_add_check),
+                                            )
+                                          ]),
+                                      replacement: ButtonBar(
+                                        alignment: MainAxisAlignment.center,
+                                        children: [
+                                          RaisedButton(
+                                            onPressed: () => API
+                                                .followAuther(
+                                                  result.user,
+                                                  !_isFollowing,
+                                                )
+                                                .then(
+                                                  (value) => setState(() =>
+                                                      _isFollowing = value),
+                                                ),
+                                            child: Text(LocaleKeys.label_follow)
+                                                .tr(),
+                                          ),
+                                        ],
+                                      ),
+                                      visible: _isFollowing))
+                              : Container(),
 
-                                // We need a SliverOverlapAbsorber here so that overlap
-                                //    events in the nested child effect the parent
-                                //  e.g. Everything scolls together
-                                SliverOverlapAbsorber(
-                                    handle: NestedScrollView
-                                        .sliverOverlapAbsorberHandleFor(
-                                            context),
-                                    sliver: SliverAppBar(
-                                        excludeHeaderSemantics: true,
-                                        backgroundColor: Theme.of(context)
-                                            .scaffoldBackgroundColor,
-                                        forceElevated: innerBoxIsScrolled,
-                                        pinned: true,
-                                        automaticallyImplyLeading: false,
-                                        title: TabBar(
-                                          indicator: BoxDecoration(),
-                                          labelColor: Theme.of(context)
-                                              .textTheme
-                                              .headline1
-                                              .color,
-                                          unselectedLabelColor: Colors.grey,
-                                          tabs: [
-                                            Tab(icon: Icon(Icons.list)),
-                                            Tab(
-                                                icon: Stack(
-                                                    alignment:
-                                                        Alignment.bottomRight,
-                                                    children: [
-                                                  Icon(Icons.favorite_border),
-                                                  Padding(
-                                                      padding: EdgeInsets.only(
-                                                          bottom: 3),
-                                                      child: !result.user
-                                                                  .openFavorite &&
-                                                              !widget.args
-                                                                  .isCurrentUser
-                                                          ? Icon(
-                                                              Icons.lock,
-                                                              size: 12,
-                                                            )
-                                                          : null)
-                                                ]))
-                                          ],
-                                        )))
-                              ],
-                          // TODO: Figure out reliable padding for pinned SliverAppBar above
-                          body: Padding(
-                              padding: EdgeInsets.only(top: 40),
-                              child: ExtendedTabBarView(
-                                  linkWithAncestor: true,
-                                  children: [
-                                    GridFragment(
-                                        stream: _authorVideos,
-                                        count: result.stats.videoCount,
-                                        showUserInfo: false,
-                                        heroTag: "userVideos"),
-                                    GridFragment(
-                                        stream: _authorFavoritedVideos,
-                                        count: result.stats.diggCount,
-                                        emptyMessage: widget.args.isCurrentUser
-                                            ? LocaleKeys.user_empty_liked_videos
-                                                .tr()
-                                            : LocaleKeys
-                                                .user_hidden_liked_videos
-                                                .tr(args: [
-                                                result.user.uniqueId
-                                              ]),
-                                        heroTag: "likedVideos")
-                                  ])));
-                    } else {
-                      return Center(
-                          child: SpinKitCubeGrid(
-                              color:
-                                  Theme.of(context).textTheme.headline1.color,
-                              size: 50));
-                    }
-                  },
-                ))));
+                          // The author's optional signature
+                          result.user.signature.isNotEmpty
+                              ? Padding(
+                                  padding: EdgeInsetsDirectional.only(
+                                      start: 30, end: 30, top: 15),
+                                  child: Text(
+                                    result.user.signature,
+                                    style: softTextStyle,
+                                    textAlign: TextAlign.center,
+                                  ))
+                              : Container(),
+
+                          // The optional link to bio
+                          ButtonBar(
+                              alignment: MainAxisAlignment.center,
+                              children: [
+                                result.user.bioLink != null
+                                    ? Padding(
+                                        padding: EdgeInsets.symmetric(
+                                            horizontal: 50),
+                                        child: FlatButton.icon(
+                                            icon: Icon(Icons.link),
+                                            label: Flexible(
+                                                child: Text(
+                                                    result.user.bioLink
+                                                        .toString(),
+                                                    softWrap: false,
+                                                    overflow:
+                                                        TextOverflow.ellipsis)),
+                                            onPressed: () => launch(result
+                                                .user.bioLink
+                                                .toString())))
+                                    : Container()
+                              ]),
+                        ],
+                      ),
+                    ),
+
+                    // We need a SliverOverlapAbsorber here so that overlap
+                    //    events in the nested child effect the parent
+                    //  e.g. Everything scolls together
+                    SliverOverlapAbsorber(
+                      handle: NestedScrollView.sliverOverlapAbsorberHandleFor(
+                          context),
+                      sliver: SliverAppBar(
+                        excludeHeaderSemantics: true,
+                        backgroundColor:
+                            Theme.of(context).scaffoldBackgroundColor,
+                        forceElevated: innerBoxIsScrolled,
+                        pinned: true,
+                        automaticallyImplyLeading: false,
+                        title: TabBar(
+                          indicator: BoxDecoration(),
+                          labelColor:
+                              Theme.of(context).textTheme.headline1.color,
+                          unselectedLabelColor: Colors.grey,
+                          tabs: [
+                            Tab(icon: Icon(Icons.list)),
+                            Tab(
+                                icon: Stack(
+                                    alignment: Alignment.bottomRight,
+                                    children: [
+                                  Icon(Icons.favorite_border),
+                                  Padding(
+                                      padding: EdgeInsets.only(bottom: 3),
+                                      child: !result.user.openFavorite &&
+                                              !widget.args.isCurrentUser
+                                          ? Icon(
+                                              Icons.lock,
+                                              size: 12,
+                                            )
+                                          : null)
+                                ]))
+                          ],
+                        ),
+                      ),
+                    )
+                  ],
+                  // TODO: Figure out reliable padding for pinned SliverAppBar above
+                  body: Padding(
+                    padding: EdgeInsets.only(top: 40),
+                    child: ExtendedTabBarView(
+                      linkWithAncestor: true,
+                      children: [
+                        GridFragment(
+                            stream: _authorVideos,
+                            count: result.stats.videoCount,
+                            showUserInfo: false,
+                            heroTag: "userVideos"),
+                        GridFragment(
+                            stream: _authorFavoritedVideos,
+                            count: result.stats.diggCount,
+                            emptyMessage: widget.args.isCurrentUser
+                                ? LocaleKeys.user_empty_liked_videos.tr()
+                                : LocaleKeys.user_hidden_liked_videos
+                                    .tr(args: [result.user.uniqueId]),
+                            heroTag: "likedVideos")
+                      ],
+                    ),
+                  ),
+                );
+              } else {
+                return Center(
+                    child: SpinKitCubeGrid(
+                        color: Theme.of(context).textTheme.headline1.color,
+                        size: 50));
+              }
+            },
+          ),
+        ),
+      ),
+    );
   }
 
   /// Generates a column with a specific [AuthorStat].

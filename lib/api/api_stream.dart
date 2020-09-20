@@ -47,6 +47,13 @@ class ApiStream<T> {
     this._results = initialResults != null ? initialResults : [];
   }
 
+  /// Construct an [ApiStream] which is empty
+  ApiStream.empty()
+      : this(
+          0,
+          (count, maxCursor) => Future.value(ApiResult(false, 0, [])),
+        );
+
   /// Return a const inner list
   Map<int, T> get results => _results.asMap();
 
@@ -115,7 +122,7 @@ class ApiStream<T> {
   int get length => _results.length;
 
   /// Clear the current cache of this stream and force a reload
-  Future<void> refresh() {
+  Future<void> refresh() async {
     // Clear the current results
     _results.clear();
 
@@ -123,6 +130,9 @@ class ApiStream<T> {
     _maxCursor = 0;
     isFetching = false;
     hasMore = true;
+
+    // Force a reload
+    await this.preload();
 
     // Alert listeners about the changes
     this._cb();

@@ -21,6 +21,8 @@
 	"hashtag_trending": "",
 
 	"notifications_empty": "",
+	"notification_announcement_title": "",
+	"notification_follow_title": "",
 
 	"user_empty_liked_videos": "",
 	"user_hidden_liked_videos": "",
@@ -60,6 +62,7 @@
 	"input_hint": "",
 	"label_color_selected": "",
 	"label_follow": "",
+	"label_followed": "",
 	"label_original": "",
 	"reset_warning": "",
 	"send_message": "",

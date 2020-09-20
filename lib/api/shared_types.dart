@@ -40,7 +40,10 @@ class Author {
 
   /// The relation of this [Author] to the currently active user
   ///
-  /// Note: 1 means following, 0 means nothing
+  /// Possible values:
+  /// - 0 => No one is following each other
+  /// - 1 => You are following this user
+  /// - 2 => You and this user are following each other
   final int relation;
 
   /// A link to this author's bio

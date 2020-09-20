@@ -21,6 +21,8 @@
 	"hashtag_trending": "Hashtag di tendenza",
 
 	"notifications_empty": "Qui vedrai i tuoi messaggi e le tue notifiche",
+	"notification_announcement_title": "Annuncio",
+	"notification_follow_title": "@{} ti ha seguito!",
 
 	"user_empty_liked_videos": "Qui vedrai i tuoi video che hai messo 'Mi Piace'",
 	"user_hidden_liked_videos": "I video a cui @{} ha messo 'Mi Piace' sono privati",
@@ -60,6 +62,7 @@
 	"input_hint": "Digita un messaggio...",
 	"label_color_selected": "Colore selezionato",
 	"label_follow": "Segui",
+	"label_followed": "Seguiti",
 	"label_original": "Originale",
 	"not_implemented": "NON IMPLEMENTATO",
 	"not_implemented_msg": "Questa funzionalità verrà aggiunta in seguito.",
