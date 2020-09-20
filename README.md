@@ -62,7 +62,9 @@ Coming soon.
 	* Bio link
 	* User's videos
 	* User's liked videos (if public)
-* View notifications (placeholder)
+* View notifications
+	* View ANNOUNCEMENT notifications (like those from TikTok)
+	* View FOLLOW notifications (from users who have followed you)
 * View profile
 * Share content
 	* Share a user

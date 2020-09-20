@@ -13,7 +13,6 @@ Listed in alphabetical order
 	* (Un)liking a comment
 	* Posting a comment
 	* Messaging a user
-* View notifications for a signed in user
 
 ## UserInfo
 
@@ -21,4 +20,3 @@ Listed in alphabetical order
 
 * Allow for the user to go to the search page
 * Allow for the user to upload a video
-* Allow for the user to view their notifications
