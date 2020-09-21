@@ -2,6 +2,7 @@ import 'package:clack/api.dart';
 import 'package:clack/api/api_stream.dart';
 import 'package:clack/api/author_result.dart';
 import 'package:clack/fragments/GridFragment.dart';
+import 'package:clack/fragments/ShareFragment.dart';
 import 'package:clack/fragments/UserHandleFragment.dart';
 import 'package:clack/generated/locale_keys.g.dart';
 import 'package:clack/views/full_image.dart';
@@ -15,7 +16,6 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
-import 'package:share/share.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class UserInfoArgs {
@@ -111,11 +111,17 @@ class _UserInfoState extends State<UserInfo>
     _actions =
         widget.args.parentActions != null ? widget.args.parentActions : [];
     if (!widget.args.isCurrentUser) {
-      _actions.add(IconButton(
+      _actions.add(
+        IconButton(
           icon: Icon(Icons.share),
-          onPressed: () => _authorResult.then((authorResult) {
-                Share.share(getAuthorShare(authorResult));
-              })));
+          onPressed: () => _authorResult.then(
+            (authorResult) => ShareFragment.show(
+              context,
+              url: getAuthorShare(authorResult),
+            ),
+          ),
+        ),
+      );
     }
   }
 

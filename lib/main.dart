@@ -13,6 +13,7 @@ import 'package:dynamic_theme/dynamic_theme.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_downloader/flutter_downloader.dart';
 import 'package:flutter_phoenix/flutter_phoenix.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -37,6 +38,9 @@ void main() {
               nextScreenBuilder: (BuildContext context) async {
                 // Allow the animation to fully play out
                 await Future.delayed(const Duration(seconds: 1));
+
+                // Initialize the downloader
+                await FlutterDownloader.initialize();
 
                 // Initialize the API
                 await API.init(context.locale.languageCode);

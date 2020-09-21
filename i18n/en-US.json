@@ -57,6 +57,7 @@
 		"other": "{} videos"
 	},
 
+	"download_permission_cancelled": "Cannot download without permissions",
 	"favorites_add": "Add to favorites",
 	"empty_message": "Nothing to see here...",
 	"input_hint": "Say something...",

@@ -6,6 +6,7 @@ import 'package:clack/api/shared_types.dart';
 import 'package:clack/api/video_result.dart';
 import 'package:clack/fragments/CommentsFragment.dart';
 import 'package:clack/fragments/MusicPlayerFragment.dart';
+import 'package:clack/fragments/ShareFragment.dart';
 import 'package:clack/fragments/TextWithLinksFragment.dart';
 import 'package:clack/fragments/UserHandleFragment.dart';
 import 'package:clack/utility.dart';
@@ -15,7 +16,6 @@ import 'package:flutter/material.dart';
 import 'package:icon_shadow/icon_shadow.dart';
 import 'package:like_button/like_button.dart';
 import 'package:marquee/marquee.dart';
-import 'package:share/share.dart';
 import 'package:wakelock/wakelock.dart';
 
 import '../api.dart';
@@ -425,7 +425,15 @@ class _VideoPageState extends State<VideoPage>
                   icon: IconShadowWidget(
                       Icon(Icons.share, size: _iconSize, color: Colors.white),
                       shadowColor: Colors.black),
-                  onPressed: () => Share.share(getVideoShare(widget.videoInfo)),
+                  onPressed: () => ShareFragment.show(
+                    context,
+                    url: getVideoShare(widget.videoInfo),
+                    downloadInfo: ShareDownloadInfo(
+                      fileName:
+                          "@${widget.videoInfo.author.uniqueId}.${widget.videoInfo.video.id}.mp4",
+                      url: widget.videoInfo.video.downloadAddr,
+                    ),
+                  ),
                 ),
                 Text(
                     statToString(context)
@@ -446,8 +454,11 @@ class _VideoPageState extends State<VideoPage>
                               API.getVideosForMusic(widget.videoInfo.music, 20),
                           headerBuilder: () => MusicPlayerFragment(
                               musicInfo: widget.videoInfo.music),
-                          getShare: () =>
-                              getMusicShare(widget.videoInfo.music)));
+                          getShare: () => getMusicShare(widget.videoInfo.music),
+                          downloadInfo: ShareDownloadInfo(
+                            fileName: "${widget.videoInfo.music.title}.mp3",
+                            url: widget.videoInfo.music.playUrl,
+                          )));
                 },
                 child: AnimatedBuilder(
                   animation: _animation,

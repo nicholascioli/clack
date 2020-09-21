@@ -57,6 +57,7 @@
 		"other": ""
 	},
 
+	"download_permission_cancelled": "",
 	"favorites_add": "",
 	"empty_message": "",
 	"input_hint": "",

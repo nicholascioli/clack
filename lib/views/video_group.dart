@@ -1,18 +1,22 @@
 import 'package:clack/api/api_stream.dart';
 import 'package:clack/api/video_result.dart';
 import 'package:clack/fragments/GridFragment.dart';
+import 'package:clack/fragments/ShareFragment.dart';
 import 'package:flutter/material.dart';
-import 'package:share/share.dart';
 
 class VideoGroupArguments {
   final Widget Function() headerBuilder;
   final ApiStream<VideoResult> stream;
   final String Function() getShare;
 
-  const VideoGroupArguments(
-      {@required this.stream,
-      @required this.headerBuilder,
-      @required this.getShare});
+  final ShareDownloadInfo downloadInfo;
+
+  const VideoGroupArguments({
+    @required this.stream,
+    @required this.headerBuilder,
+    @required this.getShare,
+    this.downloadInfo,
+  });
 }
 
 class VideoGroup extends StatefulWidget {
@@ -28,6 +32,9 @@ class _VideoGroupState extends State<VideoGroup> {
   bool _hasInit = false;
   String Function() _getShare;
 
+  // Optional download info when sharing
+  ShareDownloadInfo _downloadInfo;
+
   @override
   Widget build(BuildContext context) {
     // Extract the stream from the arguments
@@ -42,14 +49,20 @@ class _VideoGroupState extends State<VideoGroup> {
           });
       });
       _getShare = args.getShare;
+      _downloadInfo = args.downloadInfo;
       _hasInit = true;
     }
 
     return Scaffold(
         appBar: AppBar(actions: [
           IconButton(
-              icon: Icon(Icons.share),
-              onPressed: () => Share.share(_getShare()))
+            icon: Icon(Icons.share),
+            onPressed: () => ShareFragment.show(
+              context,
+              url: _getShare(),
+              downloadInfo: _downloadInfo,
+            ),
+          )
         ]),
         body: _buildPage());
   }

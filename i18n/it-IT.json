@@ -57,6 +57,7 @@
 		"other": "{} video"
 	},
 
+	"download_permission_cancelled": "Impossibile scaricare senza autorizzazione",
 	"favorites_add": "Aggiungi ai Favoriti",
 	"empty_message": "Nessun contenuto...",
 	"input_hint": "Digita un messaggio...",
