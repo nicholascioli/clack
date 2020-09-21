@@ -243,6 +243,7 @@ class _VideoFeedState extends State<VideoFeed> {
               padding: EdgeInsets.all(2),
               icon: Badge(
                 showBadge: badgeCount != 0,
+                toAnimate: false,
                 child:
                     Icon(icon, color: Theme.of(context).accentIconTheme.color),
               ),

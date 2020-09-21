@@ -72,6 +72,7 @@ class API {
       // Keep a reference to the notifications we have
       _notifications = getNotificationStream(20);
       _notificationCount = await API.getNotificationCount();
+      _notifications.preload();
     }
 
     return Future.value();

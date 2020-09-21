@@ -53,11 +53,11 @@ class NotificationFragment extends StatelessWidget {
           title: Text(LocaleKeys.notification_follow_title)
               .tr(args: [fn.fromUser.uniqueId]),
           trailing: RaisedButton(
-              child: Text(fn.followButtonType == 0
+              child: Text(fn.fromUser.relation == 0
                       ? LocaleKeys.label_follow
                       : LocaleKeys.label_followed)
                   .tr(),
-              onPressed: fn.followButtonType == 0
+              onPressed: fn.fromUser.relation == 0
                   ? () => API.followAuther(fn.fromUser, true)
                   : null),
         );

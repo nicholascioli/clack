@@ -164,11 +164,11 @@ class _VideoPageState extends State<VideoPage>
 
               // If we have changed pages, restart our position
               if (widget.currentIndex != widget.index) {
-                // TODO: Wait for BetterPlayer to support exposing the
-                // BetterPlayerController so that we can seek
-
-                // Also, pause the video if it isn't the active page
+                // Pause the video if it isn't the active page
                 if (isPlaying) _controller.pause();
+
+                // Seek to the beginning of the video on page changes
+                _controller.seekTo(Duration.zero);
               }
 
               // Update the playing status
@@ -179,8 +179,12 @@ class _VideoPageState extends State<VideoPage>
             {}
         }
       },
+      fit: BoxFit.fitWidth,
       looping: true,
-      placeholder: Image.network(widget.videoInfo.video.originCover.toString()),
+      placeholder: Image.network(
+        widget.videoInfo.video.originCover.toString(),
+        fit: BoxFit.fitWidth,
+      ),
       showControlsOnInitialize: false,
     );
 
@@ -223,13 +227,10 @@ class _VideoPageState extends State<VideoPage>
         // The video / image preview
         Hero(
           tag: "${widget.heroTag}_video_page_${widget.index}",
-          child: FittedBox(
-            fit: BoxFit.fitWidth,
-            child: BetterPlayerListVideoPlayer(
-              _src,
-              configuration: _config,
-              betterPlayerListVideoPlayerController: _controller,
-            ),
+          child: BetterPlayerListVideoPlayer(
+            _src,
+            configuration: _config,
+            betterPlayerListVideoPlayerController: _controller,
           ),
         ),
 

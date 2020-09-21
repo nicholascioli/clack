@@ -116,21 +116,15 @@ class FollowNotification extends NotificationResult {
   /// ???
   final String content;
 
-  /// Follow status
-  /// Note: What does this value actually mean?
-  final int followButtonType;
-
   const FollowNotification({
     this.fromUser,
     this.content,
-    this.followButtonType,
   });
 
   FollowNotification.json({
     Map<String, dynamic> json,
     this.fromUser,
     this.content,
-    this.followButtonType,
   }) : super.json(json);
 
   factory FollowNotification.fromJson(Map<String, dynamic> json) {
@@ -150,10 +144,9 @@ class FollowNotification extends NotificationResult {
         signature: "",
         openFavorite: false,
         verified: author["verification_type"] == 1,
-        relation: author["follower_status"],
+        relation: author["follow_status"],
       ),
       content: follow["content"],
-      followButtonType: follow["follow_button_type"],
     );
   }
 }
