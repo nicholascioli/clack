@@ -52,6 +52,9 @@
               <data
                 android:scheme="https"
                 android:host="tiktok.com" />
+              <data
+                android:scheme="https"
+                android:host="vm.tiktok.com" />
             </intent-filter>
         </activity>
         <provider
